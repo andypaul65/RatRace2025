@@ -18,8 +18,6 @@ public class EntityVersion {
     EntityVersion previous;
 
     public EntityVersion applyEvent(Event event) {
-        // Stub implementation for Phase 1 - return this
-        // In later phases, apply event logic
-        return this;
+        return event.apply(this);
     }
 }

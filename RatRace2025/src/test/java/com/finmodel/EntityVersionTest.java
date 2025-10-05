@@ -28,21 +28,27 @@ class EntityVersionTest {
 
     @Test
     void testApplyEvent() {
-        EntityVersion version = new EntityVersion(
-                Entity.builder().id("test").build(),
-                new Date(),
-                0,
-                0.0,
-                0.0,
-                Map.of(),
-                null
-        );
+        EntityVersion version = EntityVersion.builder()
+                .parent(Entity.builder().id("test").build())
+                .date(new Date())
+                .sequence(0)
+                .balance(100.0)
+                .rate(0.0)
+                .attributes(Map.of())
+                .previous(null)
+                .build();
 
-        Event event = Event.builder().id("event-id").type("test").build();
+        Event event = RecurringEvent.builder()
+                .id("event-id")
+                .type("deposit")
+                .params(Map.of("amount", 50.0))
+                .isRecurring(true)
+                .build();
 
         EntityVersion result = version.applyEvent(event);
 
-        // Stub implementation returns this
-        assertSame(version, result);
+        assertEquals(150.0, result.getBalance());
+        assertEquals(1, result.getSequence());
+        assertEquals(version, result.getPrevious());
     }
 }
