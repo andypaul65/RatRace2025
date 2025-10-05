@@ -23,7 +23,7 @@ public class Entity {
         return Entity.builder()
                 .id(this.id)
                 .name(this.name)
-                .baseProperties(new HashMap<>(this.baseProperties))
+                .baseProperties(new HashMap<>(this.baseProperties != null ? this.baseProperties : Map.of()))
                 .isTemplate(false)
                 .build();
     }
