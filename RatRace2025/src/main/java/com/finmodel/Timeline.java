@@ -18,7 +18,7 @@ public class Timeline {
     private List<TimePeriod> periods;
     private List<Event> pendingEvents;
     private Observer triggerObserver;
-    private Object simulator; // Stub for Simulator
+    private Simulator simulator;
 
     public void addPeriod(TimePeriod period) {
         if (periods == null) {
