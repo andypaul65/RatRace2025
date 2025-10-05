@@ -1,11 +1,13 @@
 package com.finmodel;
 
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.util.Collections;
 import java.util.List;
 
 @SuperBuilder
+@NoArgsConstructor
 public class RecurringEvent extends Event {
 
     @Override

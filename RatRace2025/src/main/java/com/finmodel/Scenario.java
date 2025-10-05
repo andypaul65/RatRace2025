@@ -1,5 +1,6 @@
 package com.finmodel;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,6 +17,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class Scenario {
     private List<Entity> initialEntities;
+    @JsonIgnore
     private Map<Entity, List<Event>> eventTemplates;
     private Map<String, Entity> entityTemplates;
     private List<Event> latentEvents;

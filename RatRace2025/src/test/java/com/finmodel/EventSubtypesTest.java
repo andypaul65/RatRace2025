@@ -50,7 +50,7 @@ class EventSubtypesTest {
                 .id("conditional-id")
                 .type("bonus")
                 .params(Map.of("amount", 20.0))
-                .condition(v -> v.getBalance() > 50.0)
+                .conditionScript("balance > 50")
                 .build();
 
         EntityVersion result = event.apply(version);
@@ -74,7 +74,7 @@ class EventSubtypesTest {
                 .id("conditional-id")
                 .type("bonus")
                 .params(Map.of("amount", 20.0))
-                .condition(v -> v.getBalance() > 50.0)
+                .conditionScript("balance > 50")
                 .build();
 
         EntityVersion result = event.apply(version);

@@ -1,10 +1,13 @@
 package com.finmodel;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -19,13 +22,24 @@ public class FinanceModel {
     private Set<Entity> dynamicEntities;
 
     public void loadFromJson(String file) {
-        // Stub: load scenario from JSON
-        // In full impl, use Jackson to deserialize
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            this.scenario = mapper.readValue(new File(file), Scenario.class);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load from JSON", e);
+        }
     }
 
     public void saveToJson(String file) {
-        // Stub: save scenario to JSON
-        // In full impl, use Jackson to serialize
+        if (scenario == null) {
+            return;
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            mapper.writeValue(new File(file), scenario);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to save to JSON", e);
+        }
     }
 
     public void runSimulation() {
