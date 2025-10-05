@@ -1,7 +1,10 @@
 package com.finmodel;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -11,6 +14,9 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 class FinanceModelTest {
+
+    @TempDir
+    Path tempDir;
 
     @Test
     void testFinanceModelCreation() {
@@ -140,6 +146,44 @@ class FinanceModelTest {
     }
 
     @Test
+    void testBuildSankeyDataAfterSimulation() {
+        // Setup scenario with 2 entities
+        Scenario scenario = Scenario.builder()
+                .numPeriods(1)
+                .initialEntities(new ArrayList<>(List.of(
+                        Entity.builder().id("acc1").name("Account 1").build(),
+                        Entity.builder().id("acc2").name("Account 2").build()
+                )))
+                .externals(List.of())
+                .build();
+
+        Timeline timeline = Timeline.builder().build();
+
+        FinanceModel model = FinanceModel.builder()
+                .scenario(scenario)
+                .timeline(timeline)
+                .build();
+
+        // Run simulation
+        model.runSimulation();
+
+        // Build Sankey
+        Map<String, Object> data = model.buildSankeyData();
+
+        assertNotNull(data);
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> nodes = (List<Map<String, Object>>) data.get("nodes");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> links = (List<Map<String, Object>>) data.get("links");
+
+        assertNotNull(nodes);
+        assertNotNull(links);
+        // Note: No versions in chains, so no nodes generated, but links are stubbed
+        assertEquals(0, nodes.size());
+        assertEquals(1, links.size()); // Stub links added for 2 entities
+    }
+
+    @Test
     void testDumpToConsole() {
         FinanceModel model = FinanceModel.builder()
                 .scenario(Scenario.builder().numPeriods(5).build())
@@ -167,10 +211,25 @@ class FinanceModelTest {
 
     @Test
     void testLoadSaveJson() {
-        FinanceModel model = FinanceModel.builder().build();
+        Scenario scenario = Scenario.builder()
+                .numPeriods(3)
+                .initialEntities(List.of())
+                .build();
 
-        // Stub methods, just call
-        assertDoesNotThrow(() -> model.loadFromJson("file.json"));
-        assertDoesNotThrow(() -> model.saveToJson("file.json"));
+        FinanceModel model = FinanceModel.builder()
+                .scenario(scenario)
+                .build();
+
+        // Save to temp file
+        File jsonFile = tempDir.resolve("test.json").toFile();
+        assertDoesNotThrow(() -> model.saveToJson(jsonFile.getAbsolutePath()));
+
+        // Load into new model
+        FinanceModel loadedModel = FinanceModel.builder().build();
+        assertDoesNotThrow(() -> loadedModel.loadFromJson(jsonFile.getAbsolutePath()));
+
+        // Assert loaded
+        assertNotNull(loadedModel.getScenario());
+        assertEquals(3, loadedModel.getScenario().getNumPeriods());
     }
 }

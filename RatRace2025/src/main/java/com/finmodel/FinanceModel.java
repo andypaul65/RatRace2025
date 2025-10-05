@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -64,20 +65,73 @@ public class FinanceModel {
     }
 
     public Map<String, Object> buildSankeyData() {
-        // Stub: build Sankey data from periods
         Map<String, Object> data = new HashMap<>();
-        data.put("nodes", new java.util.ArrayList<>());
-        data.put("links", new java.util.ArrayList<>());
-        // In full impl, collect from PeriodEntityAggregates
+        List<Map<String, Object>> nodes = new java.util.ArrayList<>();
+        List<Map<String, Object>> links = new java.util.ArrayList<>();
+
+        if (scenario != null && scenario.getInitialEntities() != null && timeline != null && timeline.getPeriods() != null) {
+            for (TimePeriod period : timeline.getPeriods()) {
+                for (Entity entity : scenario.getInitialEntities()) {
+                    PeriodEntityAggregate agg = period.getPeriodEntityAggregate(entity);
+                    if (agg != null) {
+                        Map<String, Object> node = new HashMap<>();
+                        node.put("id", entity.getId() + "_" + period.hashCode()); // Unique id
+                        node.put("name", entity.getName());
+                        node.put("balance", agg.getNetBalance());
+                        node.put("rate", agg.finalVersion().getRate());
+                        nodes.add(node);
+                    }
+                }
+                // Stub links: connect entities within period
+                if (scenario.getInitialEntities().size() > 1) {
+                    for (int i = 0; i < scenario.getInitialEntities().size() - 1; i++) {
+                        Map<String, Object> link = new HashMap<>();
+                        link.put("source", scenario.getInitialEntities().get(i).getId() + "_" + period.hashCode());
+                        link.put("target", scenario.getInitialEntities().get(i + 1).getId() + "_" + period.hashCode());
+                        link.put("value", 100.0); // Stub value
+                        links.add(link);
+                    }
+                }
+            }
+        }
+
+        data.put("nodes", nodes);
+        data.put("links", links);
         return data;
     }
 
     public void dumpToConsole() {
-        // Stub: dump model state to console
         System.out.println("Finance Model Dump");
-        System.out.println("Scenario: " + (scenario != null ? scenario.getNumPeriods() : "none"));
-        System.out.println("Timeline periods: " + (timeline != null && timeline.getPeriods() != null ? timeline.getPeriods().size() : 0));
-        System.out.println("Dynamic entities: " + (dynamicEntities != null ? dynamicEntities.size() : 0));
+        if (scenario == null || timeline == null || timeline.getPeriods() == null) {
+            System.out.println("No data to dump");
+            return;
+        }
+
+        System.out.printf("Timeline: %d periods%n", timeline.getPeriods().size());
+        System.out.printf("Dynamic entities: %d%n", dynamicEntities != null ? dynamicEntities.size() : 0);
+
+        for (int i = 0; i < timeline.getPeriods().size(); i++) {
+            TimePeriod period = timeline.getPeriods().get(i);
+            System.out.printf("Period %d: %s | RiskFree: %.2f%% | Inflation: %.2f%%%n",
+                    i + 1,
+                    period.getStart() != null ? period.getStart().toString() : "N/A",
+                    period.getRiskFreeRate(),
+                    period.getInflation());
+
+            if (scenario.getInitialEntities() != null) {
+                for (Entity entity : scenario.getInitialEntities()) {
+                    PeriodEntityAggregate agg = period.getPeriodEntityAggregate(entity);
+                    if (agg != null) {
+                        System.out.printf("  Entity %s: Balance %.2f, Rate %.2f%%%n",
+                                entity.getId(), agg.getNetBalance(), agg.finalVersion().getRate());
+                    }
+                }
+            }
+        }
+
+        // Simple Sankey ASCII stub
+        System.out.println("Sankey ASCII View:");
+        System.out.println("[Periods] --> [Entities] --> [Flows]");
     }
 
     public void addDynamicEntity(Entity entity) {
