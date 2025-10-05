@@ -139,4 +139,20 @@ public class FinanceModel {
             dynamicEntities.add(entity);
         }
     }
+
+    public static void main(String[] args) {
+        if (args.length < 1) {
+            System.err.println("Usage: FinanceModel <scenario.json>");
+            return;
+        }
+        String file = args[0];
+        FinanceModel model = new FinanceModel();
+        try {
+            model.loadFromJson(file);
+            model.runSimulation();
+            model.dumpToConsole();
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
 }

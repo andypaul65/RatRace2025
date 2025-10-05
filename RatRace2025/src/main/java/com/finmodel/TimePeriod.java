@@ -1,5 +1,7 @@
 package com.finmodel;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 @Data
 @Builder
@@ -21,6 +24,7 @@ public class TimePeriod {
     private double inflation;
     private Map<Entity, List<EntityVersion>> versionChains;
     private List<Event> events;
+    private Cache<Entity, PeriodEntityAggregate> aggregateCache;
 
     public void addEvent(Event event) {
         if (events == null) {
@@ -44,12 +48,31 @@ public class TimePeriod {
     }
 
     public PeriodEntityAggregate getPeriodEntityAggregate(Entity entity) {
+        // Check cache first if exists
+        if (aggregateCache != null) {
+            try {
+                return aggregateCache.getIfPresent(entity);
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
+
         EntityVersion finalVersion = getFinalVersion(entity);
         if (finalVersion == null) {
             return null;
         }
         List<Flow> netIntraFlows = getAggregatedFlows(entity);
         List<Flow> interFlows = List.of(); // Stub
-        return new PeriodEntityAggregate(finalVersion, netIntraFlows, interFlows);
+        PeriodEntityAggregate agg = new PeriodEntityAggregate(finalVersion, netIntraFlows, interFlows);
+
+        // Cache it
+        if (aggregateCache == null) {
+            aggregateCache = CacheBuilder.newBuilder()
+                    .maximumSize(100)
+                    .build();
+        }
+        aggregateCache.put(entity, agg);
+
+        return agg;
     }
 }
