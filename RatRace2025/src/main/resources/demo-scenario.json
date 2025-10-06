@@ -1,0 +1,26 @@
+{
+  "numPeriods": 12,
+  "initialEntities": [
+    {
+      "id": "savings",
+      "name": "Savings Account X",
+      "baseProperties": {
+        "initialBalance": 0.0
+      },
+      "isTemplate": false
+    }
+  ],
+  "latentEvents": [
+    {
+      "eventType": "recurring",
+      "id": "monthly-deposit",
+      "type": "deposit",
+      "params": {
+        "amount": 5000.0
+      },
+      "isRecurring": true,
+      "conditionScript": null
+    }
+  ],
+  "externals": []
+}

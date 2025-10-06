@@ -1,0 +1,18 @@
+| Name                  | Category   | Detailed Category          |
+|-----------------------|------------|----------------------------|
+| House I live in       | Asset      | Real Estate Asset          |
+| Flat I rent out       | Asset      | Rental Property Asset      |
+| Shares                | Asset      | Equity Investment          |
+| Shares in an ISA      | Asset      | Tax-Advantaged Equity      |
+| Pension               | Asset      | Retirement Savings         |
+| Electricity costs     | Expense    | Utility Expense            |
+| Mortgage payments     | Expense    | Debt Service Expense       |
+| Mortgage              | Liability  | Secured Debt Liability     |
+| Loan                  | Liability  | Unsecured Debt Liability   |
+| Share options         | Asset      | Derivative Investment      |
+| Bitcoin               | Asset      | Cryptocurrency Asset       |
+| Salary                | Income     | Employment Income          |
+| CGT                   | Tax        | Capital Gains Tax          |
+| Income tax            | Tax        | Income Tax                 |
+| Rental payments received | Income  | Rental Income              |
+| Pension payments received | Income | Pension Income
