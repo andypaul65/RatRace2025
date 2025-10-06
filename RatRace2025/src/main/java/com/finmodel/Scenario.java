@@ -23,6 +23,7 @@ public class Scenario {
     private List<Event> latentEvents;
     private int numPeriods;
     private List<Object> externals; // Stub for ExternalSource[]
+    private List<AssetGroup> assetGroups;
 
     public void initialize(Timeline timeline) {
         // Stub: create numPeriods TimePeriods and add to timeline
@@ -32,8 +33,6 @@ public class Scenario {
                     .end(new Date())
                     .riskFreeRate(3.5)
                     .inflation(2.0)
-                    .versionChains(Map.of())
-                    .events(new ArrayList<>())
                     .build();
             timeline.addPeriod(period);
         }

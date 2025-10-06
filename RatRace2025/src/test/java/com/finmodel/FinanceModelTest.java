@@ -178,7 +178,7 @@ class FinanceModelTest {
 
         assertNotNull(nodes);
         assertNotNull(links);
-        // Note: No versions in chains, so no nodes generated, but links are stubbed
+        // Entities have zero balance, so no nodes generated, but links are stubbed
         assertEquals(0, nodes.size());
         assertEquals(1, links.size()); // Stub links added for 2 entities
     }

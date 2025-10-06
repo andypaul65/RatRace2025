@@ -73,7 +73,7 @@ public class FinanceModel {
             for (TimePeriod period : timeline.getPeriods()) {
                 for (Entity entity : scenario.getInitialEntities()) {
                     PeriodEntityAggregate agg = period.getPeriodEntityAggregate(entity);
-                    if (agg != null) {
+                    if (agg != null && agg.getNetBalance() > 0) {
                         Map<String, Object> node = new HashMap<>();
                         node.put("id", entity.getId() + "_" + period.hashCode()); // Unique id
                         node.put("name", entity.getName());

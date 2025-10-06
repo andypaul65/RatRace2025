@@ -16,6 +16,9 @@ import java.util.Map;
 public class Entity {
     private String id;
     private String name;
+    private String primaryCategory;
+    private String detailedCategory;
+    private double initialValue; // For ROI tracking, starting value of the entity
     private Map<String, Object> baseProperties;
     private boolean isTemplate;
 
@@ -23,6 +26,9 @@ public class Entity {
         return Entity.builder()
                 .id(this.id)
                 .name(this.name)
+                .primaryCategory(this.primaryCategory)
+                .detailedCategory(this.detailedCategory)
+                .initialValue(this.initialValue)
                 .baseProperties(new HashMap<>(this.baseProperties != null ? this.baseProperties : Map.of()))
                 .isTemplate(false)
                 .build();
@@ -33,7 +39,7 @@ public class Entity {
                 .parent(this)
                 .date(date)
                 .sequence(0)
-                .balance(0.0)
+                .balance(this.initialValue)
                 .rate(0.0)
                 .attributes(new HashMap<>(this.baseProperties != null ? this.baseProperties : Map.of()))
                 .previous(null)
