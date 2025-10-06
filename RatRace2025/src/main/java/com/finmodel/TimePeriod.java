@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 @Data
 @Builder
@@ -22,23 +21,19 @@ public class TimePeriod {
     private java.util.Date end;
     private double riskFreeRate;
     private double inflation;
-    private Map<Entity, List<EntityVersion>> versionChains;
-    private List<Event> events;
+    @Builder.Default
+    private Map<Entity, List<EntityVersion>> versionChains = new HashMap<>();
+    @Builder.Default
+    private List<Event> events = new ArrayList<>();
     private Cache<Entity, PeriodEntityAggregate> aggregateCache;
 
     public void addEvent(Event event) {
-        if (events == null) {
-            events = new ArrayList<>();
-        }
         events.add(event);
     }
 
     public EntityVersion getFinalVersion(Entity entity) {
-        if (versionChains == null || !versionChains.containsKey(entity)) {
-            return null;
-        }
         List<EntityVersion> versions = versionChains.get(entity);
-        return versions.isEmpty() ? null : versions.get(versions.size() - 1);
+        return versions == null || versions.isEmpty() ? null : versions.get(versions.size() - 1);
     }
 
     public List<Flow> getAggregatedFlows(Entity entity) {
