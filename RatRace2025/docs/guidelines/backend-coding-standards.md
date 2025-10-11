@@ -94,16 +94,32 @@ To ensure safe and reliable command execution, follow these guardrails:
 ### Command Restrictions
 - **Server Startup**: Spring Boot can be run via `mvn spring-boot:run` for testing, but not required for core development
 
+## Design Document Maintenance (MANDATORY)
+
+**All design documents must be kept current and synchronized with code:**
+
+- **Documentation Structure**: Maintain organized docs in `docs/` with clear folder structure (design/, guidelines/, BDD/)
+- **Version Synchronization**: Update class diagrams, sequence diagrams, and architectural docs when code changes
+- **Review Process**: Peer review required for all design document modifications
+- **Change Tracking**: Document rationale for design changes and alternatives considered
+- **Accessibility**: Ensure docs are clear, well-structured, and discoverable
+
+**Commits that modify code without updating related design documents are not permitted.**
+
 ## Verification and Testing Processes
 
 Incorporate checks at milestones to catch issues proactively.
 
 - **Periodic Build Review**: Run `mvn compile` after configuration changes, before commits, and at each incremental stage end. Inspect for compilation errors and resolve all.
 - **Development Workflow**:
-  1. `mvn clean compile` for dependencies.
-  2. `mvn test` for unit/integration tests.
-  3. Logs/console checks for runtime errors.
+  1. Update design documents for planned changes
+  2. `mvn clean compile` for dependencies.
+  3. `mvn test` for unit/integration tests including Cucumber BDD tests.
+  4. `mvn test -Dtest=CucumberTestRunner` to specifically verify business requirements.
+  5. Update design documents to reflect actual implementation.
+  6. Logs/console checks for runtime errors.
 - **IDE Tips**: Use IntelliJ's Maven tool window; enable annotation processing.
+- **Pre-Commit Requirements**: All changes must pass: compilation, unit tests, integration tests, and Cucumber BDD tests.
 
 ## Common Pitfalls and Resolutions
 
@@ -123,5 +139,35 @@ Always ensure proper `.gitignore` configuration to prevent committing system fil
 - **Environment Files**: `.env*` files are ignored for security
 
 **Before initial commit**: Verify `.gitignore` exists and contains appropriate exclusions.
+
+## Mandatory Pre-Commit Checklist
+
+**NO CODE CHANGES MAY BE COMMITTED WITHOUT COMPLETING THIS CHECKLIST:**
+
+### Design Documentation
+- [ ] Design documents updated to reflect planned changes
+- [ ] Class diagrams, sequence diagrams synchronized with code
+- [ ] Peer review completed for design document changes
+- [ ] Documentation committed alongside code changes
+
+### Code Quality
+- [ ] `mvn clean compile` succeeds without errors
+- [ ] Code follows established coding standards
+- [ ] Inline comments explain complex logic
+- [ ] No TODO/FIXME comments left unresolved
+
+### Testing Requirements
+- [ ] `mvn test` passes all unit and integration tests (80%+ coverage)
+- [ ] `mvn test -Dtest=CucumberTestRunner` passes all Cucumber BDD tests
+- [ ] New business functionality has corresponding Cucumber tests
+- [ ] Existing tests still pass (no regressions)
+
+### Verification Steps
+- [ ] Manual testing of core functionality completed
+- [ ] Logs reviewed for errors or warnings
+- [ ] Build artifacts cleaned (`mvn clean`)
+- [ ] Commit message clearly describes changes and links to updated docs
+
+**FAILURE TO COMPLETE ANY CHECKLIST ITEM PREVENTS COMMITTING**
 
 Review this document periodically as the project evolves. Non-compliance requires justification in pull requests.

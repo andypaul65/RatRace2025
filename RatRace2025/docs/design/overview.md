@@ -166,13 +166,24 @@ UI -> User: display Sankey
 ## Getting Started
 
 ### For Business Users
-Start with the [BDD Use Cases](./bdd-use-cases.md) to understand what scenarios the platform currently supports.
+Start with the [BDD Use Cases](./BDD/bdd-use-cases.md) to understand what scenarios the platform currently supports.
 
 ### For Developers
 Continue with the [Architecture](./architecture.md) document for technical implementation details.
 
 ### For UI Developers
 See the [UI Integration](./ui-integration.md) guide for visualization capabilities.
+
+## Development Guidelines
+
+For developers contributing to the project, follow these mandatory guidelines:
+
+- [Backend Architecture](../guidelines/backend-architecture.md) - Development workflow and pre-commit requirements
+- [Coding Standards](../guidelines/backend-coding-standards.md) - Code quality and documentation maintenance
+- [Testing Guidelines](../guidelines/backend-testing-guidelines.md) - Unit, integration, and BDD testing requirements
+- [Framework Patterns](../guidelines/backend-framework-patterns.md) - Design patterns and extension mechanisms
+
+**All development must follow the [Mandatory Pre-Commit Checklist](../guidelines/backend-coding-standards.md#mandatory-pre-commit-checklist) before any commits.**
 
 ## Next Steps
 
@@ -182,4 +193,4 @@ This overview provides the foundation. The following documents dive deeper into 
 - [Entities and Flows](./entities-and-flows.md) - Domain modeling concepts
 - [Simulation Engine](./simulation-engine.md) - How simulations work
 - [UI Integration](./ui-integration.md) - Visualization capabilities
-- [BDD Use Cases](./bdd-use-cases.md) - Current functionality examples
+- [BDD Use Cases](./BDD/bdd-use-cases.md) - Current functionality examples

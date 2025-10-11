@@ -46,13 +46,36 @@ Include hooks for error handling, with abstractions for custom middleware.
 Start with design specs in separate Markdown files per module (e.g., module-design-spec.md).
 Iteratively develop code, tests(80%+ coverage), verification (including `mvn compile` for compilation and `mvn test` for suite execution), and documentation, emphasizing clarity through peer-reviewable comments.
 
+## Design Document Maintenance (MANDATORY)
+**Design documents must be kept current and accurate throughout development:**
+
+- **Before Implementation**: Update design documents to reflect planned changes
+- **During Development**: Keep class diagrams, sequence diagrams, and architectural descriptions synchronized with code
+- **After Implementation**: Update documents to reflect actual implementation details
+- **Peer Review**: All design document changes require peer review before committing
+- **Version Control**: Design documents are version controlled and committed alongside code changes
+
+**Failure to maintain current design documents will result in development workflow violations.**
+
 ## Pre-Commit Verification (MANDATORY)
 **ALWAYS run these commands before committing any changes:**
 1. `mvn compile` - Ensures Java compilation succeeds
-2. `mvn test` - Runs full test suite with 80%+ coverage requirement
-3. Manual verification by running the model in isolation
+2. `mvn test` - Runs full test suite with 80%+ coverage requirement including Cucumber BDD tests
+3. `mvn test -Dtest=CucumberTestRunner` - Specifically runs Cucumber BDD tests to verify business requirements
+4. Manual verification by running the model in isolation
 
 **Failure to run these commands will result in build failures and should be corrected immediately.**
+
+## Cucumber BDD Testing Integration
+**BDD tests are a critical part of the development workflow:**
+
+- **Test-Driven Development**: Write or update Cucumber feature files before implementing new functionality
+- **Continuous Verification**: Run Cucumber tests after any changes that might affect business requirements
+- **Regression Prevention**: Cucumber tests serve as living documentation and prevent feature regressions
+- **Business Alignment**: All new features must have corresponding Cucumber tests that pass
+- **Documentation Updates**: Update feature files in `docs/BDD/` when business requirements change
+
+**Commits without passing Cucumber tests are not permitted.**
 
 ## Development Environment Setup
 The backend is designed for isolation testing. Use IntelliJ or Eclipse for development. Spring Boot can be run via `mvn spring-boot:run` in a separate console for testing endpoints.

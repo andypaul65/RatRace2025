@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Data
@@ -31,23 +32,28 @@ public class Simulator {
         }
 
         // Loop through periods
-        for (TimePeriod period : timeline.getPeriods()) {
+        for (int periodIndex = 0; periodIndex < timeline.getPeriods().size(); periodIndex++) {
+            TimePeriod period = timeline.getPeriods().get(periodIndex);
+
             // Initialize versionChains for this period
             if (period.getVersionChains() == null) {
                 period.setVersionChains(new java.util.HashMap<>());
             }
+
+            // Populate period with events from scenario templates
+            populatePeriodWithEvents(period, periodIndex);
 
             // For each entity, start with initial version if first period, else carry from previous
             List<Entity> entities = new ArrayList<>(scenario.getInitialEntities());
             List<Entity> newEntities = new ArrayList<>();
             for (Entity entity : entities) {
                 EntityVersion currentVersion;
-                if (timeline.getPeriods().indexOf(period) == 0) {
+                if (periodIndex == 0) {
                     // First period, create initial
                     currentVersion = entity.createInitialVersion(new Date());
                 } else {
                     // Carry from previous period
-                    TimePeriod prevPeriod = timeline.getPeriods().get(timeline.getPeriods().indexOf(period) - 1);
+                    TimePeriod prevPeriod = timeline.getPeriods().get(periodIndex - 1);
                     currentVersion = prevPeriod.getFinalVersion(entity);
                     if (currentVersion == null) {
                         currentVersion = entity.createInitialVersion(new Date());
@@ -95,5 +101,44 @@ public class Simulator {
                 }
             }
         }
+    }
+
+    private void populatePeriodWithEvents(TimePeriod period, int periodIndex) {
+        if (scenario.getEventTemplates() == null) {
+            return;
+        }
+
+        List<Event> periodEvents = new ArrayList<>();
+
+        // Add events from templates based on entity and timing
+        for (Map.Entry<Entity, List<Event>> entry : scenario.getEventTemplates().entrySet()) {
+            Entity entity = entry.getKey();
+            List<Event> templateEvents = entry.getValue();
+
+            for (Event templateEvent : templateEvents) {
+                // For recurring events, add to every period
+                if (templateEvent.isRecurring()) {
+                    // Clone the event for this period
+                    Event periodEvent = createEventForPeriod(templateEvent, entity, periodIndex);
+                    periodEvents.add(periodEvent);
+                }
+                // For one-time events, could add logic here based on periodIndex
+            }
+        }
+
+        // Also add latent events from scenario
+        if (scenario.getLatentEvents() != null) {
+            periodEvents.addAll(scenario.getLatentEvents());
+        }
+
+        if (!periodEvents.isEmpty()) {
+            period.setEvents(periodEvents);
+        }
+    }
+
+    private Event createEventForPeriod(Event template, Entity entity, int periodIndex) {
+        // Create a copy of the template event for this specific period
+        // For recurring events, we can reuse the same event instance since it's stateless
+        return template;
     }
 }
