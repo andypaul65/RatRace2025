@@ -459,8 +459,8 @@ rectangle "Flow Types" as Types {
 rectangle "Flow States" as States {
   rectangle "Normal: Base colors" as Normal
   rectangle "Hover: Thickened + highlighted" as Hover
-  rectangle "Intra-period: Solid" as Intra
-  rectangle "Inter-period: Dashed" as Inter
+  rectangle "Intra-period: Dashed" as Intra
+  rectangle "Inter-period: Solid" as Inter
 }
 
 rectangle "Animation" as Animation {
