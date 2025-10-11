@@ -43,7 +43,7 @@ public class FinanceModel {
         }
     }
 
-    public void runSimulation() {
+    public void runSimulation() throws SimulationException {
         if (scenario == null || timeline == null) {
             return;
         }
@@ -61,7 +61,12 @@ public class FinanceModel {
         // Set in timeline
         timeline.setSimulator(simulator);
         // Run
-        simulator.playOut();
+        try {
+            simulator.playOut();
+        } catch (SimulationException e) {
+            // Re-throw to fail the scenario immediately
+            throw e;
+        }
     }
 
     public Map<String, Object> buildSankeyData() {

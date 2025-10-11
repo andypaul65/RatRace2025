@@ -63,9 +63,15 @@ public class Simulator {
                 // Apply events in this period
                 if (period.getEvents() != null) {
                     for (Event event : period.getEvents()) {
-                        currentVersion = processor.process(event, currentVersion);
-                        double amount = event.getParams() != null ? (double) event.getParams().getOrDefault("amount", 0.0) : 0.0;
-                        AuditLog.getInstance().logEvent(event.getType(), entity, amount);
+                        try {
+                            currentVersion = processor.process(event, currentVersion);
+                            double amount = event.getParams() != null ? (double) event.getParams().getOrDefault("amount", 0.0) : 0.0;
+                            AuditLog.getInstance().logEvent(event.getType(), entity, amount);
+                        } catch (SimulationException e) {
+                            // Log the error and re-throw to fail the scenario
+                            AuditLog.getInstance().logEvent("ERROR", entity, 0.0);
+                            throw e;
+                        }
                     }
                 }
 

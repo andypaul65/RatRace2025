@@ -37,10 +37,11 @@ Include hooks for error handling, with abstractions for custom middleware.
 # Error Handling Patterns
 
 ## Backend Error Handling
-- Implement global `@ExceptionHandler` in controllers or advisors to catch exceptions and return consistent JSON error responses.
-- Use HTTP status codes appropriately (e.g., 400 for bad requests, 500 for server errors).
-- Log errors for monitoring and debugging.
-- Example: `GlobalExceptionHandler.java` with methods for `Exception.class` and specific exceptions like `IllegalArgumentException`.
+- **Critical Business Rule Violations**: Errors that violate core business rules (e.g., insufficient funds for payments) immediately fail the scenario by throwing `SimulationException`.
+- **Logging and Audit Trail**: All events are logged via `AuditLog` for debugging, but critical errors also fail the simulation.
+- **Test Expectations**: BDD scenarios expect immediate failure when business rule violations occur, not continued execution with logged errors.
+- **Exception Propagation**: `SimulationException` is thrown from event processing up through the simulation stack to fail scenarios immediately.
+- **Error Recovery**: Non-critical errors may be logged and handled gracefully, but business rule violations always cause scenario failure.
 
 # Development Workflow
 Start with design specs in separate Markdown files per module (e.g., module-design-spec.md).

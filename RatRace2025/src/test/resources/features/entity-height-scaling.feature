@@ -24,3 +24,9 @@ Feature: Entity Height Scaling for Sankey Diagrams
     Then the maximum should be 10000.0 (highest absolute value found)
     And the -15000.0 should be treated as 15000.0 for this calculation
     And all normalized heights should be calculated relative to 10000.0
+
+  Scenario: Insufficient funds causes immediate scenario failure
+    Given a checking account with initial balance of $100
+    And monthly expense payments of $200
+    When attempting to run the simulation for 1 month
+    Then the simulation should fail with insufficient funds error

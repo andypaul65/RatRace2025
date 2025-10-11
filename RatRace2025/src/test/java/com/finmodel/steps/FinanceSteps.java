@@ -16,6 +16,7 @@ public class FinanceSteps {
     private Scenario scenario;
     private Timeline timeline;
     private Map<String, Entity> entities = new HashMap<>();
+    private SimulationException lastSimulationException;
 
     @Given("a checking account with initial balance of ${double}")
     public void aCheckingAccountWithInitialBalanceOf$(double balance) {
@@ -140,7 +141,7 @@ public class FinanceSteps {
     }
 
     @When("the simulation runs for {int} months")
-    public void theSimulationRunsForMonths(int months) {
+    public void theSimulationRunsForMonths(int months) throws SimulationException {
         // Set number of periods
         scenario.setNumPeriods(months);
 
@@ -298,7 +299,7 @@ public class FinanceSteps {
     }
 
     @When("buildSankeyData\\(\\) is called")
-    public void buildsankeydataIsCalled() {
+    public void buildsankeydataIsCalled() throws SimulationException {
         // Initialize timeline and finance model if not already done
         if (timeline == null) {
             timeline = Timeline.builder().build();
@@ -386,7 +387,7 @@ public class FinanceSteps {
     }
 
     @When("calculating normalized heights")
-    public void calculatingNormalizedHeights() {
+    public void calculatingNormalizedHeights() throws SimulationException {
         // Initialize timeline and finance model for negative balance scenario
         if (timeline == null) {
             timeline = Timeline.builder().build();
@@ -403,7 +404,7 @@ public class FinanceSteps {
     }
 
     @When("calculating the maximum balance for scaling")
-    public void calculatingTheMaximumBalanceForScaling() {
+    public void calculatingTheMaximumBalanceForScaling() throws SimulationException {
         // Initialize fresh timeline and finance model for mixed balance scenario
         timeline = Timeline.builder().build();
 
@@ -593,5 +594,35 @@ public class FinanceSteps {
             assertEquals(expectedHeight, normalizedHeight, 0.001,
                         "Height should be calculated relative to found maximum: " + node.get("id"));
         }
+    }
+
+    @When("attempting to run the simulation for {int} month")
+    public void attemptingToRunTheSimulationForMonth(int months) {
+        // Set number of periods
+        scenario.setNumPeriods(months);
+
+        // Initialize timeline and finance model
+        timeline = Timeline.builder().build();
+
+        financeModel = FinanceModel.builder()
+                .scenario(scenario)
+                .timeline(timeline)
+                .dynamicEntities(new java.util.HashSet<>())
+                .build();
+
+        // Store the exception for later verification
+        try {
+            financeModel.runSimulation();
+            lastSimulationException = null; // Clear if successful
+        } catch (SimulationException e) {
+            lastSimulationException = e;
+        }
+    }
+
+    @Then("the simulation should fail with insufficient funds error")
+    public void theSimulationShouldFailWithInsufficientFundsError() {
+        assertNotNull(lastSimulationException, "Expected simulation to fail with SimulationException");
+        assertTrue(lastSimulationException.getMessage().contains("Insufficient funds"),
+                  "Expected insufficient funds error, but got: " + lastSimulationException.getMessage());
     }
 }

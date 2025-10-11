@@ -467,11 +467,10 @@ Processing --> InsufficientFunds : Source has insufficient balance
 Processing --> CalculationError : Formula evaluation fails
 
 ValidationError --> SkipEvent : Log and continue
-InsufficientFunds --> ReduceAmount : Use available balance
+InsufficientFunds --> [*] : **FAIL SCENARIO** - Business rule violation
 CalculationError --> UseFallback : Apply default value
 
 SkipEvent --> Processing : Continue simulation
-ReduceAmount --> Processing : Continue with reduced amount
 UseFallback --> Processing : Continue with default
 
 Processing --> [*] : Simulation complete

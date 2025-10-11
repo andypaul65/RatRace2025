@@ -226,54 +226,67 @@ This document outlines the current capabilities of RatRace2025 using Behavior-Dr
 
 ### UC-017: Invalid Entity Configuration
 
-**As a** scenario builder  
-**I want to** receive validation feedback on configuration errors  
+**As a** scenario builder
+**I want to** receive validation feedback on configuration errors
 **So that** I can fix issues before running simulations
 
-**Given** an entity with negative initial balance  
-**When** attempting to create the entity  
-**Then** validation should fail with clear error message  
-**And** suggest correction actions  
+**Given** an entity with negative initial balance
+**When** attempting to create the entity
+**Then** validation should fail with clear error message
+**And** suggest correction actions
 **And** prevent invalid states from entering the simulation
+
+### UC-018: Insufficient Funds Error Handling
+
+**As a** financial model user
+**I want to** see immediate scenario failure when payments exceed available funds
+**So that** I can identify and correct unrealistic financial scenarios
+
+**Given** an account with $100 balance
+**And** a payment event requiring $200
+**When** the simulation attempts to process the payment
+**Then** the scenario should fail immediately with SimulationException
+**And** the error message should clearly indicate insufficient funds
+**And** the simulation should not continue with partial payments or logged warnings
 
 ## Reporting and Export
 
-### UC-018: Period Summary Generation
+### UC-019: Period Summary Generation
 
-**As a** report consumer  
-**I want to** see summaries for each time period  
+**As a** report consumer
+**I want to** see summaries for each time period
 **So that** I can track progress and identify trends
 
-**Given** a completed simulation with multiple periods  
-**When** requesting period summaries  
-**Then** each period should show starting/ending balances  
-**And** list all events and flows for that period  
+**Given** a completed simulation with multiple periods
+**When** requesting period summaries
+**Then** each period should show starting/ending balances
+**And** list all events and flows for that period
 **And** calculate net changes and key metrics
 
-### UC-019: Sankey Data Export
+### UC-020: Sankey Data Export
 
-**As a** UI developer  
-**I want to** export Sankey diagram data in standard format  
+**As a** UI developer
+**I want to** export Sankey diagram data in standard format
 **So that** I can integrate with visualization libraries
 
-**Given** a completed simulation  
-**When** calling buildSankeyData()  
-**Then** return JSON with nodes, links, and periods arrays  
-**And** include all metadata for rich interactions  
+**Given** a completed simulation
+**When** calling buildSankeyData()
+**Then** return JSON with nodes, links, and periods arrays
+**And** include all metadata for rich interactions
 **And** provide normalized heights for consistent scaling
 
 ## Performance and Scalability
 
-### UC-020: Large Scenario Handling
+### UC-021: Large Scenario Handling
 
-**As a** enterprise user  
-**I want to** run simulations with many entities and long timeframes  
+**As a** enterprise user
+**I want to** run simulations with many entities and long timeframes
 **So that** I can model complex financial situations
 
-**Given** a scenario with 100+ entities and 20-year timeframe  
-**When** running the simulation  
-**Then** processing should complete within reasonable time  
-**And** memory usage should remain bounded  
+**Given** a scenario with 100+ entities and 20-year timeframe
+**When** running the simulation
+**Then** processing should complete within reasonable time
+**And** memory usage should remain bounded
 **And** results should remain accurate and consistent
 
 ---
@@ -290,6 +303,8 @@ All use cases listed above are **currently implemented** and tested in the RatRa
 - ✅ Hierarchical grouping and navigation
 - ✅ Rich metadata for UI interactions
 - ✅ Error handling and validation
+- ✅ **Immediate scenario failure on business rule violations**
+- ✅ Insufficient funds detection and scenario termination
 - ✅ Performance optimization with caching
 
 ### Future Enhancements (Not Yet Implemented):
