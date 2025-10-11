@@ -178,9 +178,9 @@ class FinanceModelTest {
 
         assertNotNull(nodes);
         assertNotNull(links);
-        // Entities have zero balance, so no nodes generated, but links are stubbed
+        // Entities have zero balance and no flows, so no nodes or links generated
         assertEquals(0, nodes.size());
-        assertEquals(1, links.size()); // Stub links added for 2 entities
+        assertEquals(0, links.size()); // No real flows between entities with zero balance
     }
 
     @Test

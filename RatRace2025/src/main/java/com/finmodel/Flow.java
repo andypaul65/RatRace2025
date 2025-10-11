@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Data
@@ -40,5 +41,33 @@ public class Flow {
         if (type == null || type.isEmpty()) {
             throw new IllegalArgumentException("Flow type cannot be null or empty");
         }
+    }
+
+    /**
+     * Convert to Sankey link data with rich metadata for UI interactions
+     */
+    public Map<String, Object> toSankeyLink(String periodId) {
+        Map<String, Object> link = new HashMap<>();
+        link.put("id", id + "_" + periodId);
+        link.put("source", source.getParent().getId() + "_" + periodId);
+        link.put("target", target.getParent().getId() + "_" + periodId);
+        link.put("value", amount);
+        link.put("flowId", id);
+        link.put("direction", direction);
+        link.put("type", type);
+        link.put("isIntraPeriod", isIntraPeriod);
+
+        // Add source and target entity info for hover
+        link.put("sourceName", source.getParent().getName());
+        link.put("targetName", target.getParent().getName());
+        link.put("sourceCategory", source.getParent().getPrimaryCategory());
+        link.put("targetCategory", target.getParent().getPrimaryCategory());
+
+        // Add metadata if available
+        if (metadata != null) {
+            link.put("metadata", metadata);
+        }
+
+        return link;
     }
 }
