@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,7 @@ public class FinanceModel {
     private Scenario scenario;
     private Timeline timeline;
     private Set<Entity> dynamicEntities;
+    private List<ScenarioComponent> components;
 
     public void loadFromJson(String file) {
         ObjectMapper mapper = new ObjectMapper();
@@ -47,6 +49,12 @@ public class FinanceModel {
         if (scenario == null || timeline == null) {
             return;
         }
+
+        // Incorporate components into scenario if present
+        if (components != null && !components.isEmpty()) {
+            incorporateComponents();
+        }
+
         // Initialize timeline if not done
         if (timeline.getPeriods() == null || timeline.getPeriods().isEmpty()) {
             scenario.initialize(timeline);
@@ -66,6 +74,78 @@ public class FinanceModel {
         } catch (SimulationException e) {
             // Re-throw to fail the scenario immediately
             throw e;
+        }
+    }
+
+    private void incorporateComponents() throws ValidationException {
+        if (scenario.getInitialEntities() == null) {
+            scenario.setInitialEntities(new ArrayList<>());
+        }
+        if (scenario.getEventTemplates() == null) {
+            scenario.setEventTemplates(new HashMap<>());
+        }
+
+        for (ScenarioComponent component : components) {
+            // Validate component
+            component.validate();
+
+            // Add entities from component
+            for (Entity entity : component.getEntities()) {
+                scenario.getInitialEntities().add(entity);
+            }
+
+            // Add events from component with proper entity association
+            Map<String, Entity> entityMap = new HashMap<>();
+            String componentId = component.getId();
+
+            // Create a map of entity IDs for this component
+            for (Entity entity : component.getEntities()) {
+                entityMap.put(entity.getId(), entity);
+            }
+
+            // Associate events with appropriate entities based on event ID patterns
+            for (Event event : component.getEvents()) {
+                Entity targetEntity = null;
+                String eventId = event.getId();
+                System.out.println("DEBUG: Associating event " + eventId + " with component " + componentId);
+
+                // Match event to entity based on ID patterns
+                if (eventId.contains("_mortgage")) {
+                    targetEntity = entityMap.get(componentId + "_mortgage");
+                    System.out.println("DEBUG: Matched mortgage event to entity: " + (targetEntity != null ? targetEntity.getId() : "null"));
+                } else if (eventId.contains("_rent")) {
+                    targetEntity = entityMap.get(componentId + "_rent_income");
+                    System.out.println("DEBUG: Matched rent event to entity: " + (targetEntity != null ? targetEntity.getId() : "null"));
+                } else if (eventId.contains("_ancillary") || eventId.contains("_expenses")) {
+                    targetEntity = entityMap.get(componentId + "_ancillary_expenses");
+                    System.out.println("DEBUG: Matched ancillary event to entity: " + (targetEntity != null ? targetEntity.getId() : "null"));
+                } else if (eventId.contains("_tax")) {
+                    targetEntity = entityMap.get(componentId + "_property_tax");
+                    System.out.println("DEBUG: Matched tax event to entity: " + (targetEntity != null ? targetEntity.getId() : "null"));
+                } else if (eventId.contains("_insurance")) {
+                    targetEntity = entityMap.get(componentId + "_insurance");
+                    System.out.println("DEBUG: Matched insurance event to entity: " + (targetEntity != null ? targetEntity.getId() : "null"));
+                } else {
+                    // Default to property entity for appreciation and other events
+                    targetEntity = entityMap.get(componentId + "_property");
+                    System.out.println("DEBUG: Defaulted event to property entity: " + (targetEntity != null ? targetEntity.getId() : "null"));
+                }
+
+                // If we found a matching entity, associate the event with it
+                if (targetEntity != null) {
+                    scenario.getEventTemplates()
+                            .computeIfAbsent(targetEntity, k -> new ArrayList<>())
+                            .add(event);
+                    System.out.println("DEBUG: Associated event " + eventId + " with entity " + targetEntity.getId());
+                } else {
+                    // Fallback to first entity if no match found
+                    Entity fallbackEntity = component.getEntities().get(0);
+                    scenario.getEventTemplates()
+                            .computeIfAbsent(fallbackEntity, k -> new ArrayList<>())
+                            .add(event);
+                    System.out.println("DEBUG: Fallback - associated event " + eventId + " with first entity " + fallbackEntity.getId());
+                }
+            }
         }
     }
 
@@ -205,31 +285,102 @@ public class FinanceModel {
             return;
         }
 
-        System.out.printf("Timeline: %d periods%n", timeline.getPeriods().size());
-        System.out.printf("Dynamic entities: %d%n", dynamicEntities != null ? dynamicEntities.size() : 0);
+        // Calculate date range
+        java.util.Date startDate = null;
+        java.util.Date endDate = null;
+        if (!timeline.getPeriods().isEmpty()) {
+            startDate = timeline.getPeriods().get(0).getStart();
+            endDate = timeline.getPeriods().get(timeline.getPeriods().size() - 1).getEnd();
+        }
 
-        for (int i = 0; i < timeline.getPeriods().size(); i++) {
-            TimePeriod period = timeline.getPeriods().get(i);
-            System.out.printf("Period %d: %s | RiskFree: %.2f%% | Inflation: %.2f%%%n",
-                    i + 1,
-                    period.getStart() != null ? period.getStart().toString() : "N/A",
-                    period.getRiskFreeRate(),
-                    period.getInflation());
+        System.out.printf("Timeline: %s to %s%n",
+                startDate != null ? startDate.toString() : "N/A",
+                endDate != null ? endDate.toString() : "N/A");
+        System.out.printf("Total Entities: %d | Total Events: %d | Total Periods: %d%n",
+                scenario.getInitialEntities() != null ? scenario.getInitialEntities().size() : 0,
+                countTotalEvents(),
+                timeline.getPeriods().size());
 
-            if (scenario.getInitialEntities() != null) {
-                for (Entity entity : scenario.getInitialEntities()) {
-                    PeriodEntityAggregate agg = period.getPeriodEntityAggregate(entity);
-                    if (agg != null) {
-                        System.out.printf("  Entity %s: Balance %.2f, Rate %.2f%%%n",
-                                entity.getId(), agg.getNetBalance(), agg.finalVersion().getRate());
-                    }
-                }
+        // Component information
+        if (components != null && !components.isEmpty()) {
+            System.out.println("\n=== COMPONENTS ===");
+            for (ScenarioComponent component : components) {
+                System.out.println(component.describe());
             }
         }
 
-        // Simple Sankey ASCII stub
-        System.out.println("Sankey ASCII View:");
+        // Summary for the final period
+        if (!timeline.getPeriods().isEmpty()) {
+            TimePeriod finalPeriod = timeline.getPeriods().get(timeline.getPeriods().size() - 1);
+            System.out.println("\n=== PERIOD SUMMARY (Final Period) ===");
+
+            double totalAssets = 0.0;
+            double totalLiabilities = 0.0;
+            double totalIncome = 0.0;
+            double totalExpenses = 0.0;
+
+            if (scenario.getInitialEntities() != null) {
+                System.out.println("Entity Details:");
+                for (Entity entity : scenario.getInitialEntities()) {
+                    PeriodEntityAggregate agg = finalPeriod.getPeriodEntityAggregate(entity);
+                    if (agg != null) {
+                        double balance = agg.getNetBalance();
+                        System.out.printf("  - %s: $%.0f", entity.getId(), balance);
+
+                        // Show changes if we have multiple periods
+                        if (timeline.getPeriods().size() > 1) {
+                            TimePeriod firstPeriod = timeline.getPeriods().get(0);
+                            PeriodEntityAggregate firstAgg = firstPeriod.getPeriodEntityAggregate(entity);
+                            if (firstAgg != null) {
+                                double initialBalance = firstAgg.getNetBalance();
+                                double change = balance - initialBalance;
+                                System.out.printf(" (%.0f from initial $%.0f)", change, initialBalance);
+                            }
+                        }
+                        System.out.println();
+
+                        // Categorize for summary
+                        String category = entity.getPrimaryCategory();
+                        if ("Asset".equals(category)) {
+                            totalAssets += balance;
+                        } else if ("Liability".equals(category)) {
+                            totalLiabilities += Math.abs(balance); // Liabilities are typically negative
+                        } else if ("Income".equals(category)) {
+                            totalIncome += balance;
+                        } else if ("Expense".equals(category)) {
+                            totalExpenses += Math.abs(balance); // Expenses are typically negative
+                        }
+                    }
+                }
+            }
+
+            System.out.printf("Assets: $%.0f%n", totalAssets);
+            System.out.printf("Liabilities: $%.0f%n", totalLiabilities);
+            System.out.printf("Net Worth: $%.0f%n", totalAssets - totalLiabilities);
+
+            // Cash flow analysis if we have income/expense data
+            if (totalIncome > 0 || totalExpenses > 0) {
+                System.out.println("\nCash Flow Summary:");
+                System.out.printf("Income: $%.0f%n", totalIncome);
+                System.out.printf("Expenses: $%.0f%n", totalExpenses);
+                System.out.printf("Net Cash Flow: $%.0f%n", totalIncome - totalExpenses);
+            }
+        }
+
+        // Simple Sankey ASCII representation
+        System.out.println("\nSankey ASCII View:");
         System.out.println("[Periods] --> [Entities] --> [Flows]");
+        System.out.println("Timeline shows " + timeline.getPeriods().size() + " periods of financial activity");
+    }
+
+    private int countTotalEvents() {
+        if (scenario == null || scenario.getEventTemplates() == null) {
+            return 0;
+        }
+
+        return scenario.getEventTemplates().values().stream()
+                .mapToInt(List::size)
+                .sum();
     }
 
     public void addDynamicEntity(Entity entity) {
