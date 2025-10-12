@@ -504,6 +504,31 @@ public class FinanceModel {
             }
         }
 
+        // Show scenario summary financial reports
+        System.out.println("\n=== SCENARIO FINANCIAL SUMMARY ===");
+        Map<String, Object> scenarioReports = getFormattedScenarioFinancialReports();
+
+        System.out.println("Use getFormattedScenarioFinancialReports() for complete formatted reports");
+        System.out.println("Use generateScenarioIncomeStatement() for scenario Income Statement data");
+        System.out.println("Use generateScenarioBalanceSheet() for scenario Balance Sheet data");
+        System.out.println();
+
+        // Show brief scenario summary
+        if (scenarioReports.containsKey("formattedScenarioIncomeStatement")) {
+            String scenarioIncome = (String) scenarioReports.get("formattedScenarioIncomeStatement");
+            // Show key lines from scenario summary
+            String[] lines = scenarioIncome.split("\n");
+            System.out.println("SCENARIO INCOME SUMMARY:");
+            for (int i = 3; i < Math.min(lines.length, 12); i++) { // Skip header, show key data
+                if (!lines[i].trim().isEmpty()) {
+                    System.out.println("  " + lines[i]);
+                }
+            }
+            if (lines.length > 12) {
+                System.out.println("  ... (use formatted reports for full details)");
+            }
+        }
+
         // Simple Sankey ASCII representation
         System.out.println("\nSankey ASCII View:");
         System.out.println("[Periods] --> [Entities] --> [Flows]");
@@ -1112,6 +1137,295 @@ public class FinanceModel {
         reports.put("formattedBalanceSheet", balanceReport.toString());
 
         return reports;
+    }
+
+    /**
+     * Generate a cumulative Income Statement for the entire scenario
+     */
+    public Map<String, Object> generateScenarioIncomeStatement() {
+        Map<String, Object> scenarioIncomeStatement = new HashMap<>();
+
+        if (timeline == null || timeline.getPeriods() == null || timeline.getPeriods().isEmpty()) {
+            scenarioIncomeStatement.put("error", "No scenario data available");
+            return scenarioIncomeStatement;
+        }
+
+        // Aggregate data across all periods
+        Map<String, Double> totalRevenues = new HashMap<>();
+        Map<String, Double> totalExpenses = new HashMap<>();
+        java.util.concurrent.atomic.AtomicReference<Double> totalRevenue = new java.util.concurrent.atomic.AtomicReference<>(0.0);
+        java.util.concurrent.atomic.AtomicReference<Double> totalExpensesAmount = new java.util.concurrent.atomic.AtomicReference<>(0.0);
+
+        for (TimePeriod period : timeline.getPeriods()) {
+            Map<String, Object> periodIncomeStatement = generateIncomeStatement(timeline.getPeriods().indexOf(period));
+
+            if (!periodIncomeStatement.containsKey("error")) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> revenues = (Map<String, Object>) periodIncomeStatement.get("revenues");
+                @SuppressWarnings("unchecked")
+                Map<String, Object> expenses = (Map<String, Object>) periodIncomeStatement.get("expenses");
+
+                // Aggregate revenues
+                revenues.forEach((category, amount) -> {
+                    totalRevenues.put(category, totalRevenues.getOrDefault(category, 0.0) + (Double) amount);
+                    totalRevenue.updateAndGet(v -> v + (Double) amount);
+                });
+
+                // Aggregate expenses
+                expenses.forEach((category, amount) -> {
+                    totalExpenses.put(category, totalExpenses.getOrDefault(category, 0.0) + (Double) amount);
+                    totalExpensesAmount.updateAndGet(v -> v + (Double) amount);
+                });
+            }
+        }
+
+        // Calculate net income
+        double netIncome = totalRevenue.get() - totalExpensesAmount.get();
+
+        scenarioIncomeStatement.put("scenarioSummary", true);
+        scenarioIncomeStatement.put("totalPeriods", timeline.getPeriods().size());
+        scenarioIncomeStatement.put("revenues", totalRevenues);
+        scenarioIncomeStatement.put("totalRevenue", totalRevenue.get());
+        scenarioIncomeStatement.put("expenses", totalExpenses);
+        scenarioIncomeStatement.put("totalExpenses", totalExpensesAmount.get());
+        scenarioIncomeStatement.put("netIncome", totalRevenue.get() - totalExpensesAmount.get());
+
+        // Calculate average monthly figures
+        int totalMonths = timeline.getPeriods().size();
+        if (totalMonths > 0) {
+            scenarioIncomeStatement.put("averageMonthlyRevenue", totalRevenue.get() / totalMonths);
+            scenarioIncomeStatement.put("averageMonthlyExpenses", totalExpensesAmount.get() / totalMonths);
+            scenarioIncomeStatement.put("averageMonthlyNetIncome", (totalRevenue.get() - totalExpensesAmount.get()) / totalMonths);
+        }
+
+        return scenarioIncomeStatement;
+    }
+
+    /**
+     * Generate a final Balance Sheet for the entire scenario (end state)
+     */
+    public Map<String, Object> generateScenarioBalanceSheet() {
+        Map<String, Object> scenarioBalanceSheet = new HashMap<>();
+
+        if (timeline == null || timeline.getPeriods() == null || timeline.getPeriods().isEmpty()) {
+            scenarioBalanceSheet.put("error", "No scenario data available");
+            return scenarioBalanceSheet;
+        }
+
+        // Use the final period's balance sheet
+        int finalPeriodIndex = timeline.getPeriods().size() - 1;
+        Map<String, Object> finalBalanceSheet = generateBalanceSheet(finalPeriodIndex);
+
+        if (finalBalanceSheet.containsKey("error")) {
+            return finalBalanceSheet; // Return error if final period has issues
+        }
+
+        // Add scenario summary information
+        scenarioBalanceSheet.putAll(finalBalanceSheet);
+        scenarioBalanceSheet.put("scenarioSummary", true);
+        scenarioBalanceSheet.put("totalPeriods", timeline.getPeriods().size());
+        scenarioBalanceSheet.put("finalPeriod", finalPeriodIndex);
+
+        // Calculate initial vs final comparison
+        if (timeline.getPeriods().size() > 1) {
+            Map<String, Object> initialBalanceSheet = generateBalanceSheet(0);
+
+            if (!initialBalanceSheet.containsKey("error")) {
+                double initialNetWorth = (Double) initialBalanceSheet.get("netWorth");
+                double finalNetWorth = (Double) finalBalanceSheet.get("netWorth");
+
+                scenarioBalanceSheet.put("initialNetWorth", initialNetWorth);
+                scenarioBalanceSheet.put("finalNetWorth", finalNetWorth);
+                scenarioBalanceSheet.put("netWorthChange", finalNetWorth - initialNetWorth);
+                scenarioBalanceSheet.put("netWorthChangePercent",
+                    initialNetWorth != 0 ? ((finalNetWorth - initialNetWorth) / initialNetWorth) * 100.0 : 0.0);
+
+                // Calculate annualized return on net worth
+                int yearsElapsed = timeline.getPeriods().size() / 12; // Assuming monthly periods
+                if (yearsElapsed > 0 && initialNetWorth > 0) {
+                    double annualizedReturn = Math.pow((finalNetWorth / initialNetWorth), 1.0 / yearsElapsed) - 1;
+                    scenarioBalanceSheet.put("annualizedNetWorthReturn", annualizedReturn * 100.0);
+                }
+            }
+        }
+
+        return scenarioBalanceSheet;
+    }
+
+    /**
+     * Generate formatted scenario summary financial reports
+     */
+    public Map<String, Object> getFormattedScenarioFinancialReports() {
+        Map<String, Object> reports = new HashMap<>();
+
+        Map<String, Object> incomeStatement = generateScenarioIncomeStatement();
+        Map<String, Object> balanceSheet = generateScenarioBalanceSheet();
+
+        // Format Scenario Income Statement for display
+        StringBuilder incomeReport = new StringBuilder();
+        incomeReport.append("SCENARIO INCOME STATEMENT SUMMARY\n");
+        incomeReport.append("=================================\n");
+        incomeReport.append("Total Periods: ").append(timeline != null ? timeline.getPeriods().size() : 0).append("\n\n");
+
+        if (!incomeStatement.containsKey("error")) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> revenues = (Map<String, Object>) incomeStatement.get("revenues");
+            double totalRevenue = (Double) incomeStatement.get("totalRevenue");
+
+            incomeReport.append("TOTAL REVENUES:\n");
+            revenues.forEach((category, amount) ->
+                incomeReport.append(String.format("  %-25s $%10.2f\n", category, (Double) amount)));
+            incomeReport.append(String.format("  %-25s $%10.2f\n", "TOTAL REVENUE", totalRevenue));
+
+            if (incomeStatement.containsKey("averageMonthlyRevenue")) {
+                double avgMonthly = (Double) incomeStatement.get("averageMonthlyRevenue");
+                incomeReport.append(String.format("  %-25s $%10.2f\n", "AVERAGE MONTHLY", avgMonthly));
+            }
+            incomeReport.append("\n");
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> expenses = (Map<String, Object>) incomeStatement.get("expenses");
+            double totalExpenses = (Double) incomeStatement.get("totalExpenses");
+
+            incomeReport.append("TOTAL EXPENSES:\n");
+            expenses.forEach((category, amount) ->
+                incomeReport.append(String.format("  %-25s $%10.2f\n", category, (Double) amount)));
+            incomeReport.append(String.format("  %-25s $%10.2f\n", "TOTAL EXPENSES", totalExpenses));
+
+            if (incomeStatement.containsKey("averageMonthlyExpenses")) {
+                double avgMonthly = (Double) incomeStatement.get("averageMonthlyExpenses");
+                incomeReport.append(String.format("  %-25s $%10.2f\n", "AVERAGE MONTHLY", avgMonthly));
+            }
+            incomeReport.append("\n");
+
+            double netIncome = (Double) incomeStatement.get("netIncome");
+            incomeReport.append(String.format("NET INCOME (LOSS): %25s $%10.2f\n", "", netIncome));
+
+            if (incomeStatement.containsKey("averageMonthlyNetIncome")) {
+                double avgMonthly = (Double) incomeStatement.get("averageMonthlyNetIncome");
+                incomeReport.append(String.format("AVERAGE MONTHLY NET INCOME: %15s $%10.2f\n", "", avgMonthly));
+            }
+        }
+
+        // Format Scenario Balance Sheet for display
+        StringBuilder balanceReport = new StringBuilder();
+        balanceReport.append("SCENARIO BALANCE SHEET SUMMARY\n");
+        balanceReport.append("==============================\n");
+        balanceReport.append("Final Period: ").append(timeline != null ? timeline.getPeriods().size() - 1 : 0).append("\n");
+        balanceReport.append("Total Periods: ").append(timeline != null ? timeline.getPeriods().size() : 0).append("\n\n");
+
+        if (!balanceSheet.containsKey("error")) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> assets = (Map<String, Object>) balanceSheet.get("assets");
+            double totalAssets = (Double) balanceSheet.get("totalAssets");
+
+            balanceReport.append("FINAL ASSETS:\n");
+            assets.forEach((category, amount) ->
+                balanceReport.append(String.format("  %-35s $%10.2f\n", category, (Double) amount)));
+            balanceReport.append(String.format("  %-35s $%10.2f\n", "TOTAL ASSETS", totalAssets));
+            balanceReport.append("\n");
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> liabilities = (Map<String, Object>) balanceSheet.get("liabilities");
+            double totalLiabilities = (Double) balanceSheet.get("totalLiabilities");
+
+            balanceReport.append("FINAL LIABILITIES:\n");
+            liabilities.forEach((category, amount) ->
+                balanceReport.append(String.format("  %-35s $%10.2f\n", category, (Double) amount)));
+            balanceReport.append(String.format("  %-35s $%10.2f\n", "TOTAL LIABILITIES", totalLiabilities));
+            balanceReport.append("\n");
+
+            double netWorth = (Double) balanceSheet.get("netWorth");
+            balanceReport.append(String.format("FINAL NET WORTH: %35s $%10.2f\n", "", netWorth));
+
+            // Add scenario performance if available
+            if (balanceSheet.containsKey("netWorthChange")) {
+                double change = (Double) balanceSheet.get("netWorthChange");
+                double changePercent = (Double) balanceSheet.get("netWorthChangePercent");
+                balanceReport.append(String.format("NET WORTH CHANGE: %32s $%10.2f (%5.1f%%)\n", "", change, changePercent));
+
+                if (balanceSheet.containsKey("annualizedNetWorthReturn")) {
+                    double annualizedReturn = (Double) balanceSheet.get("annualizedNetWorthReturn");
+                    balanceReport.append(String.format("ANNUALIZED NET WORTH RETURN: %18s %5.1f%%\n", "", annualizedReturn));
+                }
+            }
+        }
+
+        reports.put("scenarioIncomeStatement", incomeStatement);
+        reports.put("scenarioBalanceSheet", balanceSheet);
+        reports.put("formattedScenarioIncomeStatement", incomeReport.toString());
+        reports.put("formattedScenarioBalanceSheet", balanceReport.toString());
+
+        return reports;
+    }
+
+    /**
+     * Get comprehensive scenario summary including financial reports
+     */
+    public Map<String, Object> getScenarioSummary() {
+        Map<String, Object> summary = new HashMap<>();
+
+        if (timeline == null || timeline.getPeriods() == null || timeline.getPeriods().isEmpty()) {
+            summary.put("error", "No scenario data available");
+            return summary;
+        }
+
+        // Basic scenario information
+        summary.put("totalPeriods", timeline.getPeriods().size());
+        summary.put("scenarioDuration", timeline.getPeriods().size() + " periods"); // Could be enhanced to show actual dates
+
+        // Investment performance summary
+        if (timeline.getPeriods().size() > 1) {
+            summary.put("investmentSummary", generatePeriodInvestmentSummary(timeline.getPeriods().size() - 1));
+        }
+
+        // Financial reports
+        Map<String, Object> financialReports = getFormattedScenarioFinancialReports();
+        summary.putAll(financialReports);
+
+        // Overall scenario metrics
+        Map<String, Object> scenarioMetrics = new HashMap<>();
+
+        // Calculate total returns across the scenario
+        if (scenario != null && scenario.getInitialEntities() != null) {
+            double initialTotalValue = 0.0;
+            double finalTotalValue = 0.0;
+
+            for (Entity entity : scenario.getInitialEntities()) {
+                if ("Asset".equals(entity.getPrimaryCategory())) {
+                    // For initial value, use the entity initial value
+                    initialTotalValue += entity.getInitialValue();
+
+                    // For final value, get from final period
+                    PeriodEntityAggregate finalAgg = timeline.getPeriods().get(timeline.getPeriods().size() - 1)
+                        .getPeriodEntityAggregate(entity);
+                    if (finalAgg != null) {
+                        finalTotalValue += finalAgg.getNetBalance();
+                    }
+                }
+            }
+
+            if (initialTotalValue > 0) {
+                double totalReturn = finalTotalValue - initialTotalValue;
+                double totalReturnPercent = (totalReturn / initialTotalValue) * 100.0;
+
+                scenarioMetrics.put("initialTotalValue", initialTotalValue);
+                scenarioMetrics.put("finalTotalValue", finalTotalValue);
+                scenarioMetrics.put("totalReturn", totalReturn);
+                scenarioMetrics.put("totalReturnPercent", totalReturnPercent);
+
+                // Annualized return
+                int yearsElapsed = timeline.getPeriods().size() / 12;
+                if (yearsElapsed > 0) {
+                    double annualizedReturn = Math.pow((finalTotalValue / initialTotalValue), 1.0 / yearsElapsed) - 1;
+                    scenarioMetrics.put("annualizedReturn", annualizedReturn * 100.0);
+                }
+            }
+        }
+
+        summary.put("scenarioMetrics", scenarioMetrics);
+
+        return summary;
     }
 
     public static void main(String[] args) {

@@ -24,6 +24,10 @@ public class FinanceSteps {
     private Map<String, Object> incomeStatementResult;
     private Map<String, Object> balanceSheetResult;
     private Map<String, Object> formattedReportsResult;
+    private Map<String, Object> scenarioIncomeStatementResult;
+    private Map<String, Object> scenarioBalanceSheetResult;
+    private Map<String, Object> formattedScenarioReportsResult;
+    private Map<String, Object> scenarioSummaryResult;
 
     @Given("a checking account with initial balance of ${double}")
     public void aCheckingAccountWithInitialBalanceOf$(double balance) {
@@ -1614,8 +1618,8 @@ public class FinanceSteps {
         assertTrue(balanceSheet != null && balanceSheet.containsKey("error"), "Should indicate an error");
     }
 
-    @Then("the error should specify the invalid index")
-    public void theErrorShouldSpecifyTheInvalidIndex() {
+    @Then("the reports error should specify the invalid index")
+    public void theReportsErrorShouldSpecifyTheInvalidIndex() {
         assertNotNull(formattedReportsResult, "Reports should not be null");
 
         // Check either Income Statement or Balance Sheet for error
@@ -1683,5 +1687,252 @@ public class FinanceSteps {
         assertNotNull(lastSimulationException, "Expected simulation to fail with SimulationException");
         assertTrue(lastSimulationException.getMessage().contains("Insufficient funds"),
                   "Expected insufficient funds error, but got: " + lastSimulationException.getMessage());
+    }
+
+    @When("I generate a scenario Income Statement")
+    public void iGenerateAScenarioIncomeStatement() {
+        // Initialize financeModel if not already done
+        if (financeModel == null) {
+            financeModel = FinanceModel.builder().build();
+        }
+        scenarioIncomeStatementResult = financeModel.generateScenarioIncomeStatement();
+    }
+
+    @Then("the scenario Income Statement should aggregate revenues across all periods")
+    public void theScenarioIncomeStatementShouldAggregateRevenuesAcrossAllPeriods() {
+        assertNotNull(scenarioIncomeStatementResult, "Scenario Income Statement should not be null");
+        assertTrue(scenarioIncomeStatementResult.containsKey("revenues"), "Should include revenues");
+        assertTrue(scenarioIncomeStatementResult.containsKey("totalRevenue"), "Should include total revenue");
+        assertTrue(scenarioIncomeStatementResult.containsKey("scenarioSummary"), "Should be marked as scenario summary");
+    }
+
+    @Then("the scenario Income Statement should aggregate expenses across all periods")
+    public void theScenarioIncomeStatementShouldAggregateExpensesAcrossAllPeriods() {
+        assertNotNull(scenarioIncomeStatementResult, "Scenario Income Statement should not be null");
+        assertTrue(scenarioIncomeStatementResult.containsKey("expenses"), "Should include expenses");
+        assertTrue(scenarioIncomeStatementResult.containsKey("totalExpenses"), "Should include total expenses");
+    }
+
+    @Then("the scenario Income Statement should calculate total net income")
+    public void theScenarioIncomeStatementShouldCalculateTotalNetIncome() {
+        assertNotNull(scenarioIncomeStatementResult, "Scenario Income Statement should not be null");
+        assertTrue(scenarioIncomeStatementResult.containsKey("netIncome"), "Should include net income");
+    }
+
+    @Then("the scenario Income Statement should include average monthly figures")
+    public void theScenarioIncomeStatementShouldIncludeAverageMonthlyFigures() {
+        assertNotNull(scenarioIncomeStatementResult, "Scenario Income Statement should not be null");
+        assertTrue(scenarioIncomeStatementResult.containsKey("averageMonthlyRevenue"), "Should include average monthly revenue");
+        assertTrue(scenarioIncomeStatementResult.containsKey("averageMonthlyExpenses"), "Should include average monthly expenses");
+        assertTrue(scenarioIncomeStatementResult.containsKey("averageMonthlyNetIncome"), "Should include average monthly net income");
+    }
+
+    @When("I generate a scenario Balance Sheet")
+    public void iGenerateAScenarioBalanceSheet() {
+        // Initialize financeModel if not already done
+        if (financeModel == null) {
+            financeModel = FinanceModel.builder().build();
+        }
+        scenarioBalanceSheetResult = financeModel.generateScenarioBalanceSheet();
+    }
+
+    @Then("the scenario Balance Sheet should show final period assets and liabilities")
+    public void theScenarioBalanceSheetShouldShowFinalPeriodAssetsAndLiabilities() {
+        assertNotNull(scenarioBalanceSheetResult, "Scenario Balance Sheet should not be null");
+        assertTrue(scenarioBalanceSheetResult.containsKey("assets"), "Should include assets");
+        assertTrue(scenarioBalanceSheetResult.containsKey("liabilities"), "Should include liabilities");
+        assertTrue(scenarioBalanceSheetResult.containsKey("scenarioSummary"), "Should be marked as scenario summary");
+    }
+
+    @Then("the scenario Balance Sheet should calculate final net worth")
+    public void theScenarioBalanceSheetShouldCalculateFinalNetWorth() {
+        assertNotNull(scenarioBalanceSheetResult, "Scenario Balance Sheet should not be null");
+        assertTrue(scenarioBalanceSheetResult.containsKey("netWorth"), "Should include net worth");
+    }
+
+    @Then("the scenario Balance Sheet should include net worth change from initial to final")
+    public void theScenarioBalanceSheetShouldIncludeNetWorthChangeFromInitialToFinal() {
+        assertNotNull(scenarioBalanceSheetResult, "Scenario Balance Sheet should not be null");
+        // Only applies if scenario has multiple periods
+        if (scenarioBalanceSheetResult.containsKey("initialNetWorth")) {
+            assertTrue(scenarioBalanceSheetResult.containsKey("netWorthChange"), "Should include net worth change");
+            assertTrue(scenarioBalanceSheetResult.containsKey("netWorthChangePercent"), "Should include net worth change percent");
+        }
+    }
+
+    @Then("the scenario Balance Sheet should include annualized net worth return")
+    public void theScenarioBalanceSheetShouldIncludeAnnualizedNetWorthReturn() {
+        assertNotNull(scenarioBalanceSheetResult, "Scenario Balance Sheet should not be null");
+        // Only applies if scenario has multiple periods and years elapsed > 0
+        if (scenarioBalanceSheetResult.containsKey("initialNetWorth")) {
+            assertTrue(scenarioBalanceSheetResult.containsKey("annualizedNetWorthReturn"), "Should include annualized net worth return");
+        }
+    }
+
+    @When("I request formatted scenario financial reports")
+    public void iRequestFormattedScenarioFinancialReports() {
+        // Initialize financeModel if not already done
+        if (financeModel == null) {
+            financeModel = FinanceModel.builder().build();
+        }
+        formattedScenarioReportsResult = financeModel.getFormattedScenarioFinancialReports();
+    }
+
+    @Then("the formatted reports should include scenario Income Statement")
+    public void theFormattedReportsShouldIncludeScenarioIncomeStatement() {
+        assertNotNull(formattedScenarioReportsResult, "Formatted scenario reports should not be null");
+        assertTrue(formattedScenarioReportsResult.containsKey("formattedScenarioIncomeStatement"), "Should include formatted scenario Income Statement");
+        assertTrue(formattedScenarioReportsResult.containsKey("scenarioIncomeStatement"), "Should include scenario Income Statement data");
+    }
+
+    @Then("the formatted reports should include scenario Balance Sheet")
+    public void theFormattedReportsShouldIncludeScenarioBalanceSheet() {
+        assertNotNull(formattedScenarioReportsResult, "Formatted scenario reports should not be null");
+        assertTrue(formattedScenarioReportsResult.containsKey("formattedScenarioBalanceSheet"), "Should include formatted scenario Balance Sheet");
+        assertTrue(formattedScenarioReportsResult.containsKey("scenarioBalanceSheet"), "Should include scenario Balance Sheet data");
+    }
+
+    @Then("the scenario reports should be properly formatted for display")
+    public void theScenarioReportsShouldBeProperlyFormattedForDisplay() {
+        assertNotNull(formattedScenarioReportsResult, "Formatted scenario reports should not be null");
+        String formattedIncome = (String) formattedScenarioReportsResult.get("formattedScenarioIncomeStatement");
+        String formattedBalance = (String) formattedScenarioReportsResult.get("formattedScenarioBalanceSheet");
+
+        assertNotNull(formattedIncome, "Formatted scenario Income Statement should not be null");
+        assertNotNull(formattedBalance, "Formatted scenario Balance Sheet should not be null");
+
+        assertTrue(formattedIncome.contains("SCENARIO INCOME STATEMENT SUMMARY"), "Should contain scenario Income Statement header");
+        assertTrue(formattedIncome.contains("TOTAL REVENUES:"), "Should contain revenues section");
+
+        assertTrue(formattedBalance.contains("SCENARIO BALANCE SHEET SUMMARY"), "Should contain scenario Balance Sheet header");
+        assertTrue(formattedBalance.contains("FINAL ASSETS:"), "Should contain assets section");
+    }
+
+    @Then("the reports should show total periods and duration")
+    public void theReportsShouldShowTotalPeriodsAndDuration() {
+        assertNotNull(formattedScenarioReportsResult, "Formatted scenario reports should not be null");
+        String formattedIncome = (String) formattedScenarioReportsResult.get("formattedScenarioIncomeStatement");
+
+        assertNotNull(formattedIncome, "Formatted Income Statement should not be null");
+        assertTrue(formattedIncome.contains("Total Periods:"), "Should show total periods");
+    }
+
+    @When("I request the comprehensive scenario summary")
+    public void iRequestTheComprehensiveScenarioSummary() {
+        // Initialize financeModel if not already done
+        if (financeModel == null) {
+            financeModel = FinanceModel.builder().build();
+        }
+        scenarioSummaryResult = financeModel.getScenarioSummary();
+    }
+
+    @Then("the scenario summary should include basic scenario information")
+    public void theScenarioSummaryShouldIncludeBasicScenarioInformation() {
+        assertNotNull(scenarioSummaryResult, "Scenario summary should not be null");
+        assertTrue(scenarioSummaryResult.containsKey("totalPeriods"), "Should include total periods");
+        assertTrue(scenarioSummaryResult.containsKey("scenarioDuration"), "Should include scenario duration");
+    }
+
+    @Then("the scenario summary should include investment performance summary")
+    public void theScenarioSummaryShouldIncludeInvestmentPerformanceSummary() {
+        assertNotNull(scenarioSummaryResult, "Scenario summary should not be null");
+        // Only applies if scenario has multiple periods
+        if ((Integer) scenarioSummaryResult.get("totalPeriods") > 1) {
+            assertTrue(scenarioSummaryResult.containsKey("investmentSummary"), "Should include investment summary for multi-period scenarios");
+        }
+    }
+
+    @Then("the scenario summary should include financial reports")
+    public void theScenarioSummaryShouldIncludeFinancialReports() {
+        assertNotNull(scenarioSummaryResult, "Scenario summary should not be null");
+        assertTrue(scenarioSummaryResult.containsKey("scenarioIncomeStatement"), "Should include scenario Income Statement");
+        assertTrue(scenarioSummaryResult.containsKey("scenarioBalanceSheet"), "Should include scenario Balance Sheet");
+        assertTrue(scenarioSummaryResult.containsKey("formattedScenarioIncomeStatement"), "Should include formatted Income Statement");
+        assertTrue(scenarioSummaryResult.containsKey("formattedScenarioBalanceSheet"), "Should include formatted Balance Sheet");
+    }
+
+    @Then("the scenario summary should include overall scenario metrics")
+    public void theScenarioSummaryShouldIncludeOverallScenarioMetrics() {
+        assertNotNull(scenarioSummaryResult, "Scenario summary should not be null");
+        assertTrue(scenarioSummaryResult.containsKey("scenarioMetrics"), "Should include scenario metrics");
+    }
+
+    @Then("the scenario summary should include total portfolio return")
+    public void theScenarioSummaryShouldIncludeTotalPortfolioReturn() {
+        assertNotNull(scenarioSummaryResult, "Scenario summary should not be null");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> scenarioMetrics = (Map<String, Object>) scenarioSummaryResult.get("scenarioMetrics");
+
+        if (scenarioMetrics.containsKey("initialTotalValue")) {
+            assertTrue(scenarioMetrics.containsKey("totalReturn"), "Should include total return");
+            assertTrue(scenarioMetrics.containsKey("totalReturnPercent"), "Should include total return percent");
+        }
+    }
+
+    @Then("the scenario summary should include annualized portfolio return")
+    public void theScenarioSummaryShouldIncludeAnnualizedPortfolioReturn() {
+        assertNotNull(scenarioSummaryResult, "Scenario summary should not be null");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> scenarioMetrics = (Map<String, Object>) scenarioSummaryResult.get("scenarioMetrics");
+
+        if (scenarioMetrics.containsKey("initialTotalValue")) {
+            assertTrue(scenarioMetrics.containsKey("annualizedReturn"), "Should include annualized return");
+        }
+    }
+
+    @Then("the scenario summary should show initial vs final total values")
+    public void theScenarioSummaryShouldShowInitialVsFinalTotalValues() {
+        assertNotNull(scenarioSummaryResult, "Scenario summary should not be null");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> scenarioMetrics = (Map<String, Object>) scenarioSummaryResult.get("scenarioMetrics");
+
+        if (scenarioMetrics.containsKey("initialTotalValue")) {
+            assertTrue(scenarioMetrics.containsKey("finalTotalValue"), "Should include final total value");
+        }
+    }
+
+    @Given("an empty financial scenario")
+    public void anEmptyFinancialScenario() {
+        // Create a scenario with no entities and no periods
+        scenario = Scenario.builder()
+                .initialEntities(new ArrayList<>())
+                .numPeriods(0)
+                .externals(List.of())
+                .build();
+
+        timeline = Timeline.builder().build();
+
+        financeModel = FinanceModel.builder()
+                .scenario(scenario)
+                .timeline(timeline)
+                .dynamicEntities(new java.util.HashSet<>())
+                .build();
+    }
+
+    @When("I request scenario financial reports")
+    public void iRequestScenarioFinancialReports() {
+        formattedScenarioReportsResult = financeModel.getFormattedScenarioFinancialReports();
+    }
+
+    @Then("the reports should indicate no data available")
+    public void theReportsShouldIndicateNoDataAvailable() {
+        assertNotNull(formattedScenarioReportsResult, "Reports should not be null");
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> incomeStatement = (Map<String, Object>) formattedScenarioReportsResult.get("scenarioIncomeStatement");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> balanceSheet = (Map<String, Object>) formattedScenarioReportsResult.get("scenarioBalanceSheet");
+
+        boolean hasError = (incomeStatement != null && incomeStatement.containsKey("error")) ||
+                          (balanceSheet != null && balanceSheet.containsKey("error"));
+
+        assertTrue(hasError, "Should indicate an error for empty scenario");
+    }
+
+    @Then("the scenario summary should indicate an error")
+    public void theScenarioSummaryShouldIndicateAnError() {
+        scenarioSummaryResult = financeModel.getScenarioSummary();
+        assertNotNull(scenarioSummaryResult, "Scenario summary should not be null");
+        assertTrue(scenarioSummaryResult.containsKey("error"), "Should indicate an error");
     }
 }
