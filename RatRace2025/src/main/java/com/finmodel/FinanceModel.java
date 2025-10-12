@@ -174,7 +174,7 @@ public class FinanceModel {
                 TimePeriod period = timeline.getPeriods().get(periodIndex);
                 String periodId = "period_" + periodIndex;
 
-                // Add period metadata
+                // Add period metadata with detailed context information
                 Map<String, Object> periodData = new HashMap<>();
                 periodData.put("id", periodId);
                 periodData.put("index", periodIndex);
@@ -182,6 +182,23 @@ public class FinanceModel {
                 periodData.put("endDate", period.getEnd());
                 periodData.put("riskFreeRate", period.getRiskFreeRate());
                 periodData.put("inflation", period.getInflation());
+
+                // Add period summary statistics
+                Map<String, Object> periodSummary = calculatePeriodSummary(period, periodIndex);
+                periodData.put("summary", periodSummary);
+
+                // Add investment performance for this period
+                if (periodIndex > 0) {
+                    Map<String, Object> investmentSummary = generatePeriodInvestmentSummary(periodIndex);
+                    periodData.put("investmentSummary", investmentSummary);
+                }
+
+                // Add key metrics for quick access
+                periodData.put("totalAssets", periodSummary.get("totalAssets"));
+                periodData.put("totalLiabilities", periodSummary.get("totalLiabilities"));
+                periodData.put("netWorth", periodSummary.get("netWorth"));
+                periodData.put("netCashFlow", periodSummary.get("netCashFlow"));
+
                 periods.add(periodData);
 
                 // Process asset groups first (higher level)
@@ -437,10 +454,36 @@ public class FinanceModel {
             }
         }
 
+        // Period-by-period summary for detailed analysis
+        if (timeline.getPeriods().size() > 1) {
+            System.out.println("\n=== PERIOD-BY-PERIOD ANALYSIS ===");
+            System.out.println("Use getPeriodDetails(index) for detailed period information");
+            System.out.println("Use comparePeriods(index1, index2) for period comparisons");
+            System.out.println();
+
+            System.out.println("Period Overview:");
+            for (int i = 0; i < Math.min(timeline.getPeriods().size(), 10); i++) { // Show first 10 periods
+                TimePeriod period = timeline.getPeriods().get(i);
+                Map<String, Object> summary = calculatePeriodSummary(period, i);
+
+                System.out.printf("Period %d: Assets=$%.0f, Net Worth=$%.0f, Cash Flow=$%.0f, Inflation=%.1f%%%n",
+                    i,
+                    summary.get("totalAssets"),
+                    summary.get("netWorth"),
+                    summary.get("netCashFlow"),
+                    period.getInflation() * 100);
+            }
+
+            if (timeline.getPeriods().size() > 10) {
+                System.out.println("... (" + (timeline.getPeriods().size() - 10) + " more periods)");
+            }
+        }
+
         // Simple Sankey ASCII representation
         System.out.println("\nSankey ASCII View:");
         System.out.println("[Periods] --> [Entities] --> [Flows]");
         System.out.println("Timeline shows " + timeline.getPeriods().size() + " periods of financial activity");
+        System.out.println("Use buildSankeyData() for complete visualization data with period details");
     }
 
     private void generateROIReport() {
@@ -501,6 +544,357 @@ public class FinanceModel {
         if (dynamicEntities != null) {
             dynamicEntities.add(entity);
         }
+    }
+
+    /**
+     * Get detailed information for a specific time period for UI context pane
+     */
+    public Map<String, Object> getPeriodDetails(int periodIndex) {
+        Map<String, Object> periodDetails = new HashMap<>();
+
+        if (timeline == null || timeline.getPeriods() == null ||
+            periodIndex < 0 || periodIndex >= timeline.getPeriods().size()) {
+            periodDetails.put("error", "Invalid period index: " + periodIndex);
+            return periodDetails;
+        }
+
+        TimePeriod period = timeline.getPeriods().get(periodIndex);
+
+        // Basic period information
+        periodDetails.put("periodIndex", periodIndex);
+        periodDetails.put("startDate", period.getStart());
+        periodDetails.put("endDate", period.getEnd());
+        periodDetails.put("inflation", period.getInflation());
+        periodDetails.put("riskFreeRate", period.getRiskFreeRate());
+
+        // Entity balances and changes
+        List<Map<String, Object>> entityBalances = new ArrayList<>();
+        Map<String, Object> summary = new HashMap<>();
+        double totalAssets = 0.0;
+        double totalLiabilities = 0.0;
+        double totalIncome = 0.0;
+        double totalExpenses = 0.0;
+
+        if (scenario != null && scenario.getInitialEntities() != null) {
+            for (Entity entity : scenario.getInitialEntities()) {
+                PeriodEntityAggregate agg = period.getPeriodEntityAggregate(entity);
+                if (agg != null) {
+                    Map<String, Object> entityInfo = new HashMap<>();
+                    entityInfo.put("id", entity.getId());
+                    entityInfo.put("name", entity.getName());
+                    entityInfo.put("category", entity.getPrimaryCategory());
+                    entityInfo.put("detailedCategory", entity.getDetailedCategory());
+                    entityInfo.put("balance", agg.getNetBalance());
+
+                    // Calculate change from previous period
+                    if (periodIndex > 0) {
+                        TimePeriod prevPeriod = timeline.getPeriods().get(periodIndex - 1);
+                        PeriodEntityAggregate prevAgg = prevPeriod.getPeriodEntityAggregate(entity);
+                        if (prevAgg != null) {
+                            double change = agg.getNetBalance() - prevAgg.getNetBalance();
+                            entityInfo.put("change", change);
+                            entityInfo.put("changePercent", prevAgg.getNetBalance() != 0 ?
+                                (change / prevAgg.getNetBalance()) * 100.0 : 0.0);
+                        }
+                    }
+
+                    // Add ROI metrics for investment entities
+                    if (isInvestmentEntity(entity)) {
+                        Map<String, Object> periodRoi = calculatePeriodROI(entity, periodIndex);
+                        if (!periodRoi.isEmpty()) {
+                            entityInfo.put("periodROI", periodRoi);
+                        }
+                    }
+
+                    entityBalances.add(entityInfo);
+
+                    // Update summary totals
+                    double balance = agg.getNetBalance();
+                    String category = entity.getPrimaryCategory();
+                    if ("Asset".equals(category)) {
+                        totalAssets += balance;
+                    } else if ("Liability".equals(category)) {
+                        totalLiabilities += Math.abs(balance);
+                    } else if ("Income".equals(category)) {
+                        totalIncome += balance;
+                    } else if ("Expense".equals(category)) {
+                        totalExpenses += Math.abs(balance);
+                    }
+                }
+            }
+        }
+
+        periodDetails.put("entityBalances", entityBalances);
+        periodDetails.put("totalAssets", totalAssets);
+        periodDetails.put("totalLiabilities", totalLiabilities);
+        periodDetails.put("netWorth", totalAssets - totalLiabilities);
+        periodDetails.put("totalIncome", totalIncome);
+        periodDetails.put("totalExpenses", totalExpenses);
+        periodDetails.put("netCashFlow", totalIncome - totalExpenses);
+
+        // Period flows summary
+        List<Map<String, Object>> periodFlows = new ArrayList<>();
+        if (period.getEvents() != null) {
+            for (Event event : period.getEvents()) {
+                Map<String, Object> flowInfo = new HashMap<>();
+                flowInfo.put("eventType", event.getType());
+                flowInfo.put("eventId", event.getId());
+
+                // Add flow amount if available
+                if (event.getParams() != null && event.getParams().containsKey("amount")) {
+                    flowInfo.put("amount", event.getParams().get("amount"));
+                }
+
+                periodFlows.add(flowInfo);
+            }
+        }
+        periodDetails.put("periodFlows", periodFlows);
+
+        // Investment performance summary for this period
+        if (periodIndex > 0) {
+            periodDetails.put("investmentSummary", generatePeriodInvestmentSummary(periodIndex));
+        }
+
+        return periodDetails;
+    }
+
+    private Map<String, Object> calculatePeriodROI(Entity entity, int periodIndex) {
+        Map<String, Object> periodRoi = new HashMap<>();
+
+        if (periodIndex < 1) {
+            return periodRoi; // Need at least 2 periods for ROI calculation
+        }
+
+        TimePeriod currentPeriod = timeline.getPeriods().get(periodIndex);
+        TimePeriod previousPeriod = timeline.getPeriods().get(periodIndex - 1);
+
+        PeriodEntityAggregate currentAgg = currentPeriod.getPeriodEntityAggregate(entity);
+        PeriodEntityAggregate previousAgg = previousPeriod.getPeriodEntityAggregate(entity);
+
+        if (currentAgg != null && previousAgg != null) {
+            double currentBalance = currentAgg.getNetBalance();
+            double previousBalance = previousAgg.getNetBalance();
+
+            if (previousBalance > 0) {
+                double periodReturn = currentBalance - previousBalance;
+                double periodROI = (periodReturn / previousBalance) * 100.0;
+
+                periodRoi.put("periodReturn", periodReturn);
+                periodRoi.put("periodROI", periodROI);
+                periodRoi.put("previousBalance", previousBalance);
+                periodRoi.put("currentBalance", currentBalance);
+            }
+        }
+
+        return periodRoi;
+    }
+
+    private Map<String, Object> calculatePeriodSummary(TimePeriod period, int periodIndex) {
+        Map<String, Object> summary = new HashMap<>();
+        double totalAssets = 0.0;
+        double totalLiabilities = 0.0;
+        double totalIncome = 0.0;
+        double totalExpenses = 0.0;
+        int entityCount = 0;
+        int eventCount = period.getEvents() != null ? period.getEvents().size() : 0;
+
+        if (scenario != null && scenario.getInitialEntities() != null) {
+            for (Entity entity : scenario.getInitialEntities()) {
+                PeriodEntityAggregate agg = period.getPeriodEntityAggregate(entity);
+                if (agg != null) {
+                    entityCount++;
+                    double balance = agg.getNetBalance();
+                    String category = entity.getPrimaryCategory();
+
+                    if ("Asset".equals(category)) {
+                        totalAssets += balance;
+                    } else if ("Liability".equals(category)) {
+                        totalLiabilities += Math.abs(balance);
+                    } else if ("Income".equals(category)) {
+                        totalIncome += balance;
+                    } else if ("Expense".equals(category)) {
+                        totalExpenses += Math.abs(balance);
+                    }
+                }
+            }
+        }
+
+        summary.put("entityCount", entityCount);
+        summary.put("eventCount", eventCount);
+        summary.put("totalAssets", totalAssets);
+        summary.put("totalLiabilities", totalLiabilities);
+        summary.put("netWorth", totalAssets - totalLiabilities);
+        summary.put("totalIncome", totalIncome);
+        summary.put("totalExpenses", totalExpenses);
+        summary.put("netCashFlow", totalIncome - totalExpenses);
+
+        // Calculate changes from previous period if applicable
+        if (periodIndex > 0) {
+            TimePeriod prevPeriod = timeline.getPeriods().get(periodIndex - 1);
+            Map<String, Object> prevSummary = calculatePeriodSummary(prevPeriod, periodIndex - 1);
+
+            summary.put("assetChange", totalAssets - (Double) prevSummary.get("totalAssets"));
+            summary.put("liabilityChange", totalLiabilities - (Double) prevSummary.get("totalLiabilities"));
+            summary.put("netWorthChange", (totalAssets - totalLiabilities) - (Double) prevSummary.get("netWorth"));
+            summary.put("cashFlowChange", (totalIncome - totalExpenses) - (Double) prevSummary.get("netCashFlow"));
+        }
+
+        return summary;
+    }
+
+    private Map<String, Object> generatePeriodInvestmentSummary(int periodIndex) {
+        Map<String, Object> summary = new HashMap<>();
+        List<Map<String, Object>> investmentPerformance = new ArrayList<>();
+
+        double totalInvestmentValue = 0.0;
+        double totalInvestmentReturn = 0.0;
+
+        if (scenario != null && scenario.getInitialEntities() != null) {
+            for (Entity entity : scenario.getInitialEntities()) {
+                if (isInvestmentEntity(entity)) {
+                    TimePeriod period = timeline.getPeriods().get(periodIndex);
+                    PeriodEntityAggregate agg = period.getPeriodEntityAggregate(entity);
+
+                    if (agg != null) {
+                        double balance = agg.getNetBalance();
+                        totalInvestmentValue += balance;
+
+                        Map<String, Object> perf = new HashMap<>();
+                        perf.put("entityId", entity.getId());
+                        perf.put("entityName", entity.getName());
+                        perf.put("investmentType", entity.getDetailedCategory());
+                        perf.put("currentValue", balance);
+
+                        // Calculate period return if not first period
+                        if (periodIndex > 0) {
+                            Map<String, Object> periodRoi = calculatePeriodROI(entity, periodIndex);
+                            if (!periodRoi.isEmpty()) {
+                                perf.put("periodROI", periodRoi.get("periodROI"));
+                                perf.put("periodReturn", periodRoi.get("periodReturn"));
+                                totalInvestmentReturn += (Double) periodRoi.get("periodReturn");
+                            }
+                        }
+
+                        investmentPerformance.add(perf);
+                    }
+                }
+            }
+        }
+
+        summary.put("investmentPerformance", investmentPerformance);
+        summary.put("totalInvestmentValue", totalInvestmentValue);
+        summary.put("totalInvestmentReturn", totalInvestmentReturn);
+
+        if (totalInvestmentValue > 0) {
+            summary.put("portfolioReturnPercent", (totalInvestmentReturn / (totalInvestmentValue - totalInvestmentReturn)) * 100.0);
+        }
+
+        return summary;
+    }
+
+    /**
+     * Get list of available periods with basic information
+     */
+    public List<Map<String, Object>> getAvailablePeriods() {
+        List<Map<String, Object>> periods = new ArrayList<>();
+
+        if (timeline == null || timeline.getPeriods() == null) {
+            return periods;
+        }
+
+        for (int i = 0; i < timeline.getPeriods().size(); i++) {
+            TimePeriod period = timeline.getPeriods().get(i);
+            Map<String, Object> periodInfo = new HashMap<>();
+            periodInfo.put("index", i);
+            periodInfo.put("id", "period_" + i);
+            periodInfo.put("startDate", period.getStart());
+            periodInfo.put("endDate", period.getEnd());
+            periodInfo.put("inflation", period.getInflation());
+            periodInfo.put("riskFreeRate", period.getRiskFreeRate());
+
+            // Add quick summary
+            Map<String, Object> summary = calculatePeriodSummary(period, i);
+            periodInfo.put("totalAssets", summary.get("totalAssets"));
+            periodInfo.put("netWorth", summary.get("netWorth"));
+            periodInfo.put("netCashFlow", summary.get("netCashFlow"));
+
+            periods.add(periodInfo);
+        }
+
+        return periods;
+    }
+
+    /**
+     * Compare two periods and return detailed comparison data
+     */
+    public Map<String, Object> comparePeriods(int periodIndex1, int periodIndex2) {
+        Map<String, Object> comparison = new HashMap<>();
+
+        if (timeline == null || timeline.getPeriods() == null ||
+            periodIndex1 < 0 || periodIndex1 >= timeline.getPeriods().size() ||
+            periodIndex2 < 0 || periodIndex2 >= timeline.getPeriods().size()) {
+            comparison.put("error", "Invalid period indices");
+            return comparison;
+        }
+
+        TimePeriod period1 = timeline.getPeriods().get(periodIndex1);
+        TimePeriod period2 = timeline.getPeriods().get(periodIndex2);
+
+        Map<String, Object> summary1 = calculatePeriodSummary(period1, periodIndex1);
+        Map<String, Object> summary2 = calculatePeriodSummary(period2, periodIndex2);
+
+        comparison.put("period1", Map.of(
+            "index", periodIndex1,
+            "summary", summary1
+        ));
+        comparison.put("period2", Map.of(
+            "index", periodIndex2,
+            "summary", summary2
+        ));
+
+        // Calculate differences
+        Map<String, Object> differences = new HashMap<>();
+        differences.put("assetDifference", (Double) summary2.get("totalAssets") - (Double) summary1.get("totalAssets"));
+        differences.put("liabilityDifference", (Double) summary2.get("totalLiabilities") - (Double) summary1.get("totalLiabilities"));
+        differences.put("netWorthDifference", (Double) summary2.get("netWorth") - (Double) summary1.get("netWorth"));
+        differences.put("cashFlowDifference", (Double) summary2.get("netCashFlow") - (Double) summary1.get("netCashFlow"));
+
+        comparison.put("differences", differences);
+
+        // Investment performance comparison
+        if (scenario != null && scenario.getInitialEntities() != null) {
+            List<Map<String, Object>> investmentComparison = new ArrayList<>();
+
+            for (Entity entity : scenario.getInitialEntities()) {
+                if (isInvestmentEntity(entity)) {
+                    Map<String, Object> entityComparison = new HashMap<>();
+                    entityComparison.put("entityId", entity.getId());
+                    entityComparison.put("entityName", entity.getName());
+
+                    PeriodEntityAggregate agg1 = period1.getPeriodEntityAggregate(entity);
+                    PeriodEntityAggregate agg2 = period2.getPeriodEntityAggregate(entity);
+
+                    if (agg1 != null && agg2 != null) {
+                        double balance1 = agg1.getNetBalance();
+                        double balance2 = agg2.getNetBalance();
+
+                        entityComparison.put("balancePeriod1", balance1);
+                        entityComparison.put("balancePeriod2", balance2);
+                        entityComparison.put("balanceDifference", balance2 - balance1);
+
+                        if (balance1 > 0) {
+                            entityComparison.put("growthPercent", ((balance2 - balance1) / balance1) * 100.0);
+                        }
+                    }
+
+                    investmentComparison.add(entityComparison);
+                }
+            }
+
+            comparison.put("investmentComparison", investmentComparison);
+        }
+
+        return comparison;
     }
 
     public static void main(String[] args) {

@@ -18,6 +18,9 @@ public class FinanceSteps {
     private Map<String, Entity> entities = new HashMap<>();
     private SimulationException lastSimulationException;
     private ValidationException lastValidationException;
+    private Map<String, Object> periodDetailsResult;
+    private Map<String, Object> periodComparisonResult;
+    private List<Map<String, Object>> availablePeriodsResult;
 
     @Given("a checking account with initial balance of ${double}")
     public void aCheckingAccountWithInitialBalanceOf$(double balance) {
@@ -1098,6 +1101,263 @@ public class FinanceSteps {
                 .orElse(null);
 
         assertNotNull(bondsEntity, "Bonds portfolio should be inflation-affected");
+    }
+
+    @When("I request details for period {int}")
+    public void iRequestDetailsForPeriod(int periodIndex) {
+        // Initialize financeModel if not already done
+        if (financeModel == null) {
+            financeModel = FinanceModel.builder().build();
+        }
+        periodDetailsResult = financeModel.getPeriodDetails(periodIndex);
+    }
+
+    @Then("the period details should include economic factors")
+    public void thePeriodDetailsShouldIncludeEconomicFactors() {
+        assertNotNull(periodDetailsResult, "Period details should not be null");
+        assertTrue(periodDetailsResult.containsKey("inflation"), "Should include inflation");
+        assertTrue(periodDetailsResult.containsKey("riskFreeRate"), "Should include risk-free rate");
+        assertTrue(periodDetailsResult.containsKey("startDate"), "Should include start date");
+        assertTrue(periodDetailsResult.containsKey("endDate"), "Should include end date");
+    }
+
+    @Then("the period details should include entity balances")
+    public void thePeriodDetailsShouldIncludeEntityBalances() {
+        assertNotNull(periodDetailsResult, "Period details should not be null");
+        assertTrue(periodDetailsResult.containsKey("entityBalances"), "Should include entity balances");
+        assertTrue(periodDetailsResult.containsKey("totalAssets"), "Should include total assets");
+        assertTrue(periodDetailsResult.containsKey("totalLiabilities"), "Should include total liabilities");
+        assertTrue(periodDetailsResult.containsKey("netWorth"), "Should include net worth");
+    }
+
+    @Then("the period details should include investment performance")
+    public void thePeriodDetailsShouldIncludeInvestmentPerformance() {
+        assertNotNull(periodDetailsResult, "Period details should not be null");
+        // For period 1 and later, should include investment summary
+        if ((Integer) periodDetailsResult.get("periodIndex") > 0) {
+            assertTrue(periodDetailsResult.containsKey("investmentSummary"), "Should include investment summary for periods > 0");
+        }
+    }
+
+    @Then("the period details should include period flows")
+    public void thePeriodDetailsShouldIncludePeriodFlows() {
+        assertNotNull(periodDetailsResult, "Period details should not be null");
+        assertTrue(periodDetailsResult.containsKey("periodFlows"), "Should include period flows");
+    }
+
+    @When("I compare period {int} and period {int}")
+    public void iComparePeriodAndPeriod(int periodIndex1, int periodIndex2) {
+        // Initialize financeModel if not already done
+        if (financeModel == null) {
+            financeModel = FinanceModel.builder().build();
+        }
+        periodComparisonResult = financeModel.comparePeriods(periodIndex1, periodIndex2);
+    }
+
+    @Then("the comparison should show differences in assets, liabilities, and net worth")
+    public void theComparisonShouldShowDifferencesInAssetsLiabilitiesAndNetWorth() {
+        assertNotNull(periodComparisonResult, "Period comparison should not be null");
+        assertTrue(periodComparisonResult.containsKey("differences"), "Should include differences");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> differences = (Map<String, Object>) periodComparisonResult.get("differences");
+        assertTrue(differences.containsKey("assetDifference"), "Should include asset difference");
+        assertTrue(differences.containsKey("liabilityDifference"), "Should include liability difference");
+        assertTrue(differences.containsKey("netWorthDifference"), "Should include net worth difference");
+    }
+
+    @Then("the comparison should include investment performance differences")
+    public void theComparisonShouldIncludeInvestmentPerformanceDifferences() {
+        assertNotNull(periodComparisonResult, "Period comparison should not be null");
+        assertTrue(periodComparisonResult.containsKey("investmentComparison"), "Should include investment comparison");
+    }
+
+    @Then("the comparison should highlight key changes")
+    public void theComparisonShouldHighlightKeyChanges() {
+        assertNotNull(periodComparisonResult, "Period comparison should not be null");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> differences = (Map<String, Object>) periodComparisonResult.get("differences");
+        // Should have some non-zero differences
+        boolean hasChanges = differences.values().stream()
+            .filter(v -> v instanceof Number)
+            .mapToDouble(v -> ((Number) v).doubleValue())
+            .anyMatch(v -> Math.abs(v) > 0.01);
+        assertTrue(hasChanges, "Should highlight some key changes between periods");
+    }
+
+    @When("I request the list of available periods")
+    public void iRequestTheListOfAvailablePeriods() {
+        // Initialize financeModel if not already done
+        if (financeModel == null) {
+            financeModel = FinanceModel.builder().build();
+        }
+        availablePeriodsResult = financeModel.getAvailablePeriods();
+    }
+
+    @Then("each period should have basic information")
+    public void eachPeriodShouldHaveBasicInformation() {
+        assertNotNull(availablePeriodsResult, "Available periods should not be null");
+        assertFalse(availablePeriodsResult.isEmpty(), "Should have at least one period");
+
+        for (Map<String, Object> period : availablePeriodsResult) {
+            assertTrue(period.containsKey("index"), "Should include period index");
+            assertTrue(period.containsKey("id"), "Should include period id");
+            assertTrue(period.containsKey("startDate"), "Should include start date");
+            assertTrue(period.containsKey("endDate"), "Should include end date");
+        }
+    }
+
+    @Then("periods should include economic factors")
+    public void periodsShouldIncludeEconomicFactors() {
+        assertNotNull(availablePeriodsResult, "Available periods should not be null");
+        assertFalse(availablePeriodsResult.isEmpty(), "Should have at least one period");
+
+        for (Map<String, Object> period : availablePeriodsResult) {
+            assertTrue(period.containsKey("inflation"), "Should include inflation");
+            assertTrue(period.containsKey("riskFreeRate"), "Should include risk-free rate");
+        }
+    }
+
+    @Then("periods should include summary metrics")
+    public void periodsShouldIncludeSummaryMetrics() {
+        assertNotNull(availablePeriodsResult, "Available periods should not be null");
+        assertFalse(availablePeriodsResult.isEmpty(), "Should have at least one period");
+
+        for (Map<String, Object> period : availablePeriodsResult) {
+            assertTrue(period.containsKey("totalAssets"), "Should include total assets");
+            assertTrue(period.containsKey("netWorth"), "Should include net worth");
+            assertTrue(period.containsKey("netCashFlow"), "Should include net cash flow");
+        }
+    }
+
+    @Then("the period details should include investment-specific ROI calculations")
+    public void thePeriodDetailsShouldIncludeInvestmentSpecificROICalculations() {
+        assertNotNull(periodDetailsResult, "Period details should not be null");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> entityBalances = (List<Map<String, Object>>) periodDetailsResult.get("entityBalances");
+
+        boolean hasInvestmentROI = entityBalances.stream()
+            .anyMatch(entity -> entity.containsKey("periodROI"));
+
+        assertTrue(hasInvestmentROI, "Should include investment-specific ROI calculations");
+    }
+
+    @Then("the period ROI should reflect period-over-period performance")
+    public void thePeriodROIShouldReflectPeriodOverPeriodPerformance() {
+        assertNotNull(periodDetailsResult, "Period details should not be null");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> entityBalances = (List<Map<String, Object>>) periodDetailsResult.get("entityBalances");
+
+        for (Map<String, Object> entity : entityBalances) {
+            if (entity.containsKey("periodROI")) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> periodROI = (Map<String, Object>) entity.get("periodROI");
+                assertTrue(periodROI.containsKey("periodROI"), "Should include period ROI percentage");
+                assertTrue(periodROI.containsKey("previousBalance"), "Should include previous balance");
+                assertTrue(periodROI.containsKey("currentBalance"), "Should include current balance");
+            }
+        }
+    }
+
+    @Then("the period data should include detailed summaries")
+    public void thePeriodDataShouldIncludeDetailedSummaries() {
+        Map<String, Object> sankeyData = financeModel.buildSankeyData();
+        assertNotNull(sankeyData, "Sankey data should be available");
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> periods = (List<Map<String, Object>>) sankeyData.get("periods");
+        assertNotNull(periods, "Should include periods in Sankey data");
+        assertFalse(periods.isEmpty(), "Should have at least one period");
+
+        for (Map<String, Object> period : periods) {
+            assertTrue(period.containsKey("summary"), "Should include detailed summary");
+            assertTrue(period.containsKey("totalAssets"), "Should include total assets");
+            assertTrue(period.containsKey("totalLiabilities"), "Should include total liabilities");
+            assertTrue(period.containsKey("netWorth"), "Should include net worth");
+        }
+    }
+
+    @Then("the period data should include investment performance")
+    public void thePeriodDataShouldIncludeInvestmentPerformance() {
+        Map<String, Object> sankeyData = financeModel.buildSankeyData();
+        assertNotNull(sankeyData, "Sankey data should be available");
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> periods = (List<Map<String, Object>>) sankeyData.get("periods");
+
+        // Check periods after the first one for investment summary
+        boolean hasInvestmentSummary = periods.stream()
+            .anyMatch(period -> period.containsKey("investmentSummary"));
+
+        assertTrue(hasInvestmentSummary, "Should include investment performance for some periods");
+    }
+
+    @Then("the period data should include key metrics for quick access")
+    public void thePeriodDataShouldIncludeKeyMetricsForQuickAccess() {
+        Map<String, Object> sankeyData = financeModel.buildSankeyData();
+        assertNotNull(sankeyData, "Sankey data should be available");
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> periods = (List<Map<String, Object>>) sankeyData.get("periods");
+
+        for (Map<String, Object> period : periods) {
+            assertTrue(period.containsKey("totalAssets"), "Should include total assets for quick access");
+            assertTrue(period.containsKey("totalLiabilities"), "Should include total liabilities for quick access");
+            assertTrue(period.containsKey("netWorth"), "Should include net worth for quick access");
+            assertTrue(period.containsKey("netCashFlow"), "Should include net cash flow for quick access");
+        }
+    }
+
+    @When("I request details for an invalid period index")
+    public void iRequestDetailsForAnInvalidPeriodIndex() {
+        // Initialize financeModel if not already done
+        if (financeModel == null) {
+            financeModel = FinanceModel.builder().build();
+        }
+        periodDetailsResult = financeModel.getPeriodDetails(999); // Invalid index
+    }
+
+    @Then("the response should indicate an error")
+    public void theResponseShouldIndicateAnError() {
+        assertNotNull(periodDetailsResult, "Should return a result even for invalid index");
+        assertTrue(periodDetailsResult.containsKey("error"), "Should indicate an error");
+    }
+
+    @Then("the error should specify the invalid index")
+    public void theErrorShouldSpecifyTheInvalidIndex() {
+        assertNotNull(periodDetailsResult, "Should return a result");
+        assertTrue(periodDetailsResult.containsKey("error"), "Should indicate an error");
+        String error = (String) periodDetailsResult.get("error");
+        assertTrue(error.contains("999") || error.contains("Invalid"), "Should specify the invalid index");
+    }
+
+    @Then("the investment comparison should show growth percentages")
+    public void theInvestmentComparisonShouldShowGrowthPercentages() {
+        assertNotNull(periodComparisonResult, "Period comparison should not be null");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> investmentComparison = (List<Map<String, Object>>) periodComparisonResult.get("investmentComparison");
+
+        for (Map<String, Object> comparison : investmentComparison) {
+            if (comparison.containsKey("growthPercent")) {
+                // Should have growth percentage for investments with positive starting balance
+                double growthPercent = (Double) comparison.get("growthPercent");
+                assertTrue(growthPercent >= -100.0, "Growth percentage should be reasonable");
+            }
+        }
+    }
+
+    @Then("the comparison should highlight significant changes")
+    public void theComparisonShouldHighlightSignificantChanges() {
+        assertNotNull(periodComparisonResult, "Period comparison should not be null");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> differences = (Map<String, Object>) periodComparisonResult.get("differences");
+
+        // Should have some measurable differences
+        boolean hasSignificantChanges = differences.values().stream()
+            .filter(v -> v instanceof Number)
+            .mapToDouble(v -> Math.abs(((Number) v).doubleValue()))
+            .anyMatch(v -> v > 1.0); // More than $1 difference
+
+        assertTrue(hasSignificantChanges, "Should highlight significant changes between periods");
     }
 
     @Given("a rental property component with invalid configuration:")
