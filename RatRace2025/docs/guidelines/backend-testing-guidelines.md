@@ -7,10 +7,10 @@ Testing serves as executable documentation and is developed iteratively alongsid
 **Behavior-Driven Development tests are required for all business functionality:**
 
 - **Framework**: Use Cucumber JVM with JUnit Platform integration
-- **Location**: Feature files in `src/test/resources/features/`, step definitions in `src/test/java/com/finmodel/steps/`
+- **Location**: Feature files in both `docs/BDD/` (documentation) and `src/test/resources/features/` (execution)
 - **Execution**: Run with `mvn test -Dtest=CucumberTestRunner`
 - **Coverage**: All user stories and use cases must have corresponding Cucumber tests
-- **Maintenance**: Keep feature files in `docs/BDD/` synchronized with test features
+- **Maintenance**: Keep feature files synchronized between `docs/BDD/` and `src/test/resources/features/`
 
 **Business requirements without passing Cucumber tests cannot be committed.**
 
