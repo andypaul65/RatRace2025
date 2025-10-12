@@ -39,3 +39,28 @@ build/
 
 ### Old lib directory (replaced by Maven dependencies) ###
 lib/
+
+### Security and Environment Files ###
+# Environment variables and secrets
+.env*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# NPM configuration (may contain tokens)
+.npmrc
+
+# Secret files
+config/secrets.json
+config/*.key
+config/*.pem
+config/*.crt
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
