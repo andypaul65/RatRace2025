@@ -128,6 +128,13 @@ public class Simulator {
                     Event periodEvent = createEventForPeriod(templateEvent, entity, periodIndex);
                     periodEvents.add(periodEvent);
                 }
+                // For calculation events (like investment returns), add annually (every 12 months)
+                else if ("investment_returns".equals(templateEvent.getType())) {
+                    if (periodIndex % 12 == 0) { // Annual calculation
+                        Event periodEvent = createEventForPeriod(templateEvent, entity, periodIndex);
+                        periodEvents.add(periodEvent);
+                    }
+                }
                 // For one-time events, could add logic here based on periodIndex
             }
         }

@@ -116,19 +116,28 @@ public class FinanceModel {
                 } else if (eventId.contains("_rent")) {
                     targetEntity = entityMap.get(componentId + "_rent_income");
                     System.out.println("DEBUG: Matched rent event to entity: " + (targetEntity != null ? targetEntity.getId() : "null"));
-                } else if (eventId.contains("_ancillary") || eventId.contains("_expenses")) {
+                } else if (eventId.contains("_ancillary_expenses_event")) {
                     targetEntity = entityMap.get(componentId + "_ancillary_expenses");
-                    System.out.println("DEBUG: Matched ancillary event to entity: " + (targetEntity != null ? targetEntity.getId() : "null"));
+                    System.out.println("DEBUG: Matched ancillary expenses event to entity: " + (targetEntity != null ? targetEntity.getId() : "null"));
                 } else if (eventId.contains("_tax")) {
                     targetEntity = entityMap.get(componentId + "_property_tax");
                     System.out.println("DEBUG: Matched tax event to entity: " + (targetEntity != null ? targetEntity.getId() : "null"));
                 } else if (eventId.contains("_insurance")) {
                     targetEntity = entityMap.get(componentId + "_insurance");
                     System.out.println("DEBUG: Matched insurance event to entity: " + (targetEntity != null ? targetEntity.getId() : "null"));
+                } else if (eventId.contains("_contribution")) {
+                    targetEntity = entityMap.get(componentId + "_contributions");
+                    System.out.println("DEBUG: Matched contribution event to entity: " + (targetEntity != null ? targetEntity.getId() : "null"));
+                } else if (eventId.contains("_returns")) {
+                    targetEntity = entityMap.get(componentId + "_account");
+                    System.out.println("DEBUG: Matched returns event to account entity: " + (targetEntity != null ? targetEntity.getId() : "null"));
                 } else {
-                    // Default to property entity for appreciation and other events
+                    // Default to property entity for appreciation and other events, or account for investments
                     targetEntity = entityMap.get(componentId + "_property");
-                    System.out.println("DEBUG: Defaulted event to property entity: " + (targetEntity != null ? targetEntity.getId() : "null"));
+                    if (targetEntity == null) {
+                        targetEntity = entityMap.get(componentId + "_account");
+                    }
+                    System.out.println("DEBUG: Defaulted event to entity: " + (targetEntity != null ? targetEntity.getId() : "null"));
                 }
 
                 // If we found a matching entity, associate the event with it
@@ -260,6 +269,15 @@ public class FinanceModel {
             Map<String, Object> node = agg.toSankeyNode(periodId);
             node.put("periodIndex", periodIndex);
             node.put("normalizedHeight", maxBalance > 0 ? Math.abs(agg.getNetBalance()) / maxBalance : 0);
+
+            // Add ROI metrics for investment entities if we have multiple periods
+            if (timeline.getPeriods().size() > 1 && isInvestmentEntity(entity)) {
+                Map<String, Object> roiMetrics = calculateEntityROI(entity);
+                if (!roiMetrics.isEmpty()) {
+                    node.put("roiMetrics", roiMetrics);
+                }
+            }
+
             nodes.add(node);
 
             // Process flows for this entity
@@ -276,6 +294,52 @@ public class FinanceModel {
                 }
             }
         }
+    }
+
+    private boolean isInvestmentEntity(Entity entity) {
+        return "Asset".equals(entity.getPrimaryCategory()) &&
+               ("Investment".equals(entity.getDetailedCategory()) ||
+                "Cryptocurrency Asset".equals(entity.getDetailedCategory()) ||
+                "Equity Investment".equals(entity.getDetailedCategory()) ||
+                "Derivative Investment".equals(entity.getDetailedCategory()));
+    }
+
+    private Map<String, Object> calculateEntityROI(Entity entity) {
+        Map<String, Object> roiData = new HashMap<>();
+
+        if (timeline.getPeriods().size() < 2) {
+            return roiData;
+        }
+
+        TimePeriod firstPeriod = timeline.getPeriods().get(0);
+        TimePeriod finalPeriod = timeline.getPeriods().get(timeline.getPeriods().size() - 1);
+
+        PeriodEntityAggregate firstAgg = firstPeriod.getPeriodEntityAggregate(entity);
+        PeriodEntityAggregate finalAgg = finalPeriod.getPeriodEntityAggregate(entity);
+
+        if (firstAgg != null && finalAgg != null) {
+            double initialValue = firstAgg.getNetBalance();
+            double finalValue = finalAgg.getNetBalance();
+
+            if (initialValue > 0) {
+                double totalReturn = finalValue - initialValue;
+                double roi = (totalReturn / initialValue) * 100.0;
+
+                int totalPeriods = timeline.getPeriods().size();
+                double yearsElapsed = totalPeriods / 12.0; // Assuming monthly periods
+
+                double annualizedROI = Math.pow(1 + (roi / 100.0), 1.0 / yearsElapsed) - 1;
+                annualizedROI *= 100.0;
+
+                roiData.put("initialValue", initialValue);
+                roiData.put("finalValue", finalValue);
+                roiData.put("totalROI", roi);
+                roiData.put("annualizedROI", annualizedROI);
+                roiData.put("timeframeYears", yearsElapsed);
+            }
+        }
+
+        return roiData;
     }
 
     public void dumpToConsole() {
@@ -307,6 +371,12 @@ public class FinanceModel {
             for (ScenarioComponent component : components) {
                 System.out.println(component.describe());
             }
+        }
+
+        // Investment ROI Analysis
+        if (timeline.getPeriods().size() > 1) {
+            System.out.println("\n=== INVESTMENT ROI ANALYSIS ===");
+            generateROIReport();
         }
 
         // Summary for the final period
@@ -371,6 +441,50 @@ public class FinanceModel {
         System.out.println("\nSankey ASCII View:");
         System.out.println("[Periods] --> [Entities] --> [Flows]");
         System.out.println("Timeline shows " + timeline.getPeriods().size() + " periods of financial activity");
+    }
+
+    private void generateROIReport() {
+        if (scenario.getInitialEntities() == null || timeline.getPeriods().size() < 2) {
+            return;
+        }
+
+        TimePeriod firstPeriod = timeline.getPeriods().get(0);
+        TimePeriod finalPeriod = timeline.getPeriods().get(timeline.getPeriods().size() - 1);
+
+        int totalPeriods = timeline.getPeriods().size();
+        double yearsElapsed = totalPeriods / 12.0; // Assuming monthly periods
+
+        System.out.println("Investment Performance Comparison:");
+        System.out.println("Timeframe: " + yearsElapsed + " years");
+
+        for (Entity entity : scenario.getInitialEntities()) {
+            // Only analyze investment assets
+            if (!"Asset".equals(entity.getPrimaryCategory()) ||
+                (!"Investment".equals(entity.getDetailedCategory()) &&
+                 !"Cryptocurrency Asset".equals(entity.getDetailedCategory()) &&
+                 !"Equity Investment".equals(entity.getDetailedCategory()) &&
+                 !"Derivative Investment".equals(entity.getDetailedCategory()))) {
+                continue;
+            }
+
+            PeriodEntityAggregate firstAgg = firstPeriod.getPeriodEntityAggregate(entity);
+            PeriodEntityAggregate finalAgg = finalPeriod.getPeriodEntityAggregate(entity);
+
+            if (firstAgg != null && finalAgg != null) {
+                double initialValue = firstAgg.getNetBalance();
+                double finalValue = finalAgg.getNetBalance();
+
+                if (initialValue > 0) {
+                    double totalReturn = finalValue - initialValue;
+                    double roi = (totalReturn / initialValue) * 100.0;
+                    double annualizedROI = Math.pow(1 + (roi / 100.0), 1.0 / yearsElapsed) - 1;
+                    annualizedROI *= 100.0;
+
+                    System.out.printf("  %s: $%.0f → $%.0f | Total ROI: %.1f%% | Annualized: %.1f%%%n",
+                            entity.getName(), initialValue, finalValue, roi, annualizedROI);
+                }
+            }
+        }
     }
 
     private int countTotalEvents() {

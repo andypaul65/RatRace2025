@@ -196,7 +196,7 @@ public class RentalProperty implements ScenarioComponent {
         // Ancillary expenses (monthly)
         if (ancillaryExpenseEntity != null && ancillaryCosts > 0) {
             events.add(RecurringEvent.builder()
-                    .id(id + "_ancillary_expenses")
+                    .id(id + "_ancillary_expenses_event")
                     .type("recurring")
                     .params(java.util.Map.of(
                             "amount", -ancillaryCosts, // Negative for expense
