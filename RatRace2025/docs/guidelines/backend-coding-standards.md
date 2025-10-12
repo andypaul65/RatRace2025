@@ -136,8 +136,7 @@ Always ensure proper `.gitignore` configuration to prevent committing system fil
 - **macOS Users**: `.DS_Store` files are automatically ignored
 - **IDE Files**: `.idea/` directories are ignored
 - **Build Artifacts**: `target/`, `*.log` files are ignored
-- **Environment Files**: `.env*` files are ignored for security
-
+- **Environment and Secret Files**: `.env*`, `.npmrc`, `config/secrets.json`, `config/*.key` files are ignored for security to prevent exposing tokens or credentials    
 **Before initial commit**: Verify `.gitignore` exists and contains appropriate exclusions.
 
 ## Mandatory Pre-Commit Checklist

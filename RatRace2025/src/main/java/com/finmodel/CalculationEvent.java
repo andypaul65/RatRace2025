@@ -17,6 +17,11 @@ public class CalculationEvent extends Event {
             return applyInvestmentReturns(from);
         }
 
+        // Check if this is a UK tax calculation
+        if ("uk_tax_calculation".equals(getType())) {
+            return applyUKTaxCalculation(from);
+        }
+
         // Default behavior: calculate new rate based on balance
         double newRate = from.getBalance() > 1000 ? 5.0 : 3.0;
         return EntityVersion.builder()
@@ -64,6 +69,24 @@ public class CalculationEvent extends Event {
                 .sequence(from.getSequence() + 1)
                 .balance(newBalance)
                 .rate(newRate)
+                .attributes(from.getAttributes())
+                .previous(from)
+                .build();
+    }
+
+    private EntityVersion applyUKTaxCalculation(EntityVersion from) {
+        // This event calculates UK taxes for a person but doesn't change the entity balance
+        // The tax calculation is stored in the Person object and used for reporting
+        // The entity balance represents tax paid (negative expense)
+
+        // For now, return unchanged version - tax calculations are handled separately
+        // In a full implementation, this would calculate and apply tax liabilities
+        return EntityVersion.builder()
+                .parent(from.getParent())
+                .date(from.getDate())
+                .sequence(from.getSequence() + 1)
+                .balance(from.getBalance())
+                .rate(from.getRate())
                 .attributes(from.getAttributes())
                 .previous(from)
                 .build();

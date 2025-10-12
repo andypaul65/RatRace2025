@@ -23,6 +23,7 @@ public class FinanceModel {
     private Timeline timeline;
     private Set<Entity> dynamicEntities;
     private List<ScenarioComponent> components;
+    private List<Person> people;
 
     public void loadFromJson(String file) {
         ObjectMapper mapper = new ObjectMapper();
@@ -84,8 +85,18 @@ public class FinanceModel {
         if (scenario.getEventTemplates() == null) {
             scenario.setEventTemplates(new HashMap<>());
         }
+        if (people == null) {
+            people = new ArrayList<>();
+        }
 
         for (ScenarioComponent component : components) {
+            // Handle Person components specially
+            if (component instanceof Person) {
+                Person person = (Person) component;
+                people.add(person);
+                // Person components are handled separately, continue to next component
+                continue;
+            }
             // Validate component
             component.validate();
 
@@ -501,6 +512,34 @@ public class FinanceModel {
                 if (lines.length > 8) {
                     System.out.println("  ... (use formatted reports for full details)");
                 }
+            }
+        }
+
+        // Show person tax summary if people are defined
+        if (people != null && !people.isEmpty()) {
+            System.out.println("\n=== UK TAX SUMMARY ===");
+            Map<String, Object> taxSummary = getPersonTaxSummary();
+
+            if (!taxSummary.containsKey("error")) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> personTaxes = (List<Map<String, Object>>) taxSummary.get("personTaxDetails");
+
+                for (Map<String, Object> personTax : personTaxes) {
+                    String personName = (String) personTax.get("personName");
+                    double grossIncome = (Double) personTax.get("grossIncome");
+                    double totalTax = (Double) personTax.get("totalTaxPaid");
+                    double effectiveRate = (Double) personTax.get("effectiveTaxRate");
+
+                    System.out.printf("%s: £%.0f gross, £%.0f tax, %.1f%% effective rate%n",
+                        personName, grossIncome, totalTax, effectiveRate);
+                }
+
+                double totalGross = (Double) taxSummary.get("totalGrossIncome");
+                double totalTax = (Double) taxSummary.get("totalTaxPaid");
+                double avgEffectiveRate = (Double) taxSummary.get("averageEffectiveTaxRate");
+
+                System.out.printf("Total: £%.0f gross income, £%.0f tax paid, %.1f%% average effective rate%n",
+                    totalGross, totalTax, avgEffectiveRate);
             }
         }
 
@@ -1426,6 +1465,113 @@ public class FinanceModel {
         summary.put("scenarioMetrics", scenarioMetrics);
 
         return summary;
+    }
+
+    /**
+     * Get comprehensive person tax summary
+     */
+    public Map<String, Object> getPersonTaxSummary() {
+        Map<String, Object> taxSummary = new HashMap<>();
+
+        if (people == null || people.isEmpty()) {
+            taxSummary.put("error", "No people defined in scenario");
+            return taxSummary;
+        }
+
+        List<Map<String, Object>> personTaxDetails = new ArrayList<>();
+        double totalGrossIncome = 0.0;
+        double totalTaxPaid = 0.0;
+        double totalNetIncome = 0.0;
+
+        for (Person person : people) {
+            Map<String, Object> personTax = new HashMap<>();
+            personTax.put("personId", person.getId());
+            personTax.put("personName", person.getName());
+            personTax.put("grossIncome", person.getGrossIncome());
+            personTax.put("taxableIncome", person.getTaxableIncome());
+            personTax.put("incomeTax", person.getIncomeTax());
+            personTax.put("nationalInsurance", person.getNationalInsurance());
+            personTax.put("capitalGainsTax", person.getCapitalGainsTax());
+            personTax.put("totalTaxPaid", person.getTotalTaxPaid());
+            personTax.put("effectiveTaxRate", person.getEffectiveTaxRate());
+            personTax.put("netIncome", person.getGrossIncome() - person.getTotalTaxPaid());
+
+            personTaxDetails.add(personTax);
+
+            totalGrossIncome += person.getGrossIncome();
+            totalTaxPaid += person.getTotalTaxPaid();
+            totalNetIncome += (person.getGrossIncome() - person.getTotalTaxPaid());
+        }
+
+        taxSummary.put("personTaxDetails", personTaxDetails);
+        taxSummary.put("totalGrossIncome", totalGrossIncome);
+        taxSummary.put("totalTaxPaid", totalTaxPaid);
+        taxSummary.put("totalNetIncome", totalNetIncome);
+        taxSummary.put("averageEffectiveTaxRate", totalGrossIncome > 0 ? (totalTaxPaid / totalGrossIncome) * 100.0 : 0.0);
+
+        // Tax efficiency analysis
+        Map<String, Object> taxEfficiency = calculateTaxEfficiencyAnalysis();
+        taxSummary.put("taxEfficiency", taxEfficiency);
+
+        return taxSummary;
+    }
+
+    /**
+     * Calculate tax efficiency analysis across all people
+     */
+    private Map<String, Object> calculateTaxEfficiencyAnalysis() {
+        Map<String, Object> efficiency = new HashMap<>();
+
+        if (people == null || people.isEmpty()) {
+            return efficiency;
+        }
+
+        double totalGrossIncome = 0.0;
+        double totalTaxPaid = 0.0;
+        double totalAllowancesUsed = 0.0;
+        double totalAllowancesAvailable = 0.0;
+
+        for (Person person : people) {
+            totalGrossIncome += person.getGrossIncome();
+            totalTaxPaid += person.getTotalTaxPaid();
+            totalAllowancesUsed += Math.min(person.getGrossIncome(), person.getPersonalAllowance());
+            totalAllowancesAvailable += person.getPersonalAllowance();
+        }
+
+        efficiency.put("overallEffectiveTaxRate", totalGrossIncome > 0 ? (totalTaxPaid / totalGrossIncome) * 100.0 : 0.0);
+        efficiency.put("allowanceUtilizationRate", totalAllowancesAvailable > 0 ? (totalAllowancesUsed / totalAllowancesAvailable) * 100.0 : 0.0);
+        efficiency.put("totalAllowancesUsed", totalAllowancesUsed);
+        efficiency.put("totalAllowancesAvailable", totalAllowancesAvailable);
+        efficiency.put("unusedAllowances", totalAllowancesAvailable - totalAllowancesUsed);
+
+        // Identify tax optimization opportunities
+        List<String> optimizationSuggestions = new ArrayList<>();
+        if (totalAllowancesUsed < totalAllowancesAvailable * 0.8) {
+            optimizationSuggestions.add("Consider increasing pension contributions to utilize unused personal allowances");
+        }
+        if (totalTaxPaid / totalGrossIncome > 0.3) {
+            optimizationSuggestions.add("High effective tax rate - consider tax-efficient investment strategies");
+        }
+
+        efficiency.put("optimizationSuggestions", optimizationSuggestions);
+
+        return efficiency;
+    }
+
+    /**
+     * Get UK tax year information
+     */
+    public Map<String, Object> getUKTaxYearInfo(int taxYear) {
+        Map<String, Object> taxYearInfo = new HashMap<>();
+        taxYearInfo.put("taxYear", taxYear);
+        taxYearInfo.put("taxYearString", taxYear + "/" + (taxYear + 1));
+        taxYearInfo.put("startDate", "06 April " + taxYear);
+        taxYearInfo.put("endDate", "05 April " + (taxYear + 1));
+        taxYearInfo.put("personalAllowance", UKTaxCalculator.TaxRates.PERSONAL_ALLOWANCE);
+        taxYearInfo.put("basicRateThreshold", UKTaxCalculator.TaxRates.BASIC_RATE_THRESHOLD);
+        taxYearInfo.put("higherRateThreshold", UKTaxCalculator.TaxRates.HIGHER_RATE_THRESHOLD);
+
+        return taxYearInfo;
     }
 
     public static void main(String[] args) {
