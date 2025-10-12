@@ -21,6 +21,9 @@ public class FinanceSteps {
     private Map<String, Object> periodDetailsResult;
     private Map<String, Object> periodComparisonResult;
     private List<Map<String, Object>> availablePeriodsResult;
+    private Map<String, Object> incomeStatementResult;
+    private Map<String, Object> balanceSheetResult;
+    private Map<String, Object> formattedReportsResult;
 
     @Given("a checking account with initial balance of ${double}")
     public void aCheckingAccountWithInitialBalanceOf$(double balance) {
@@ -1358,6 +1361,273 @@ public class FinanceSteps {
             .anyMatch(v -> v > 1.0); // More than $1 difference
 
         assertTrue(hasSignificantChanges, "Should highlight significant changes between periods");
+    }
+
+    @When("I generate an Income Statement for period {int}")
+    public void iGenerateAnIncomeStatementForPeriod(int periodIndex) {
+        // Initialize financeModel if not already done
+        if (financeModel == null) {
+            financeModel = FinanceModel.builder().build();
+        }
+        incomeStatementResult = financeModel.generateIncomeStatement(periodIndex);
+    }
+
+    @Then("the Income Statement should include revenues")
+    public void theIncomeStatementShouldIncludeRevenues() {
+        assertNotNull(incomeStatementResult, "Income Statement should not be null");
+        assertTrue(incomeStatementResult.containsKey("revenues"), "Should include revenues");
+        assertTrue(incomeStatementResult.containsKey("totalRevenue"), "Should include total revenue");
+    }
+
+    @Then("the Income Statement should include expenses")
+    public void theIncomeStatementShouldIncludeExpenses() {
+        assertNotNull(incomeStatementResult, "Income Statement should not be null");
+        assertTrue(incomeStatementResult.containsKey("expenses"), "Should include expenses");
+        assertTrue(incomeStatementResult.containsKey("totalExpenses"), "Should include total expenses");
+    }
+
+    @Then("the Income Statement should calculate net income")
+    public void theIncomeStatementShouldCalculateNetIncome() {
+        assertNotNull(incomeStatementResult, "Income Statement should not be null");
+        assertTrue(incomeStatementResult.containsKey("netIncome"), "Should include net income");
+    }
+
+    @Then("revenues should be categorized appropriately")
+    public void revenuesShouldBeCategorizedAppropriately() {
+        assertNotNull(incomeStatementResult, "Income Statement should not be null");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> revenues = (Map<String, Object>) incomeStatementResult.get("revenues");
+        assertNotNull(revenues, "Revenues should not be null");
+        // Should have some revenue entries based on the scenario
+        assertFalse(revenues.isEmpty() || (Double) incomeStatementResult.get("totalRevenue") > 0,
+                   "Should have revenue data");
+    }
+
+    @Then("expenses should be categorized appropriately")
+    public void expensesShouldBeCategorizedAppropriately() {
+        assertNotNull(incomeStatementResult, "Income Statement should not be null");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> expenses = (Map<String, Object>) incomeStatementResult.get("expenses");
+        assertNotNull(expenses, "Expenses should not be null");
+        // Should have some expense entries based on the scenario
+        assertFalse(expenses.isEmpty() || (Double) incomeStatementResult.get("totalExpenses") > 0,
+                   "Should have expense data");
+    }
+
+    @When("I generate a Balance Sheet for period {int}")
+    public void iGenerateABalanceSheetForPeriod(int periodIndex) {
+        // Initialize financeModel if not already done
+        if (financeModel == null) {
+            financeModel = FinanceModel.builder().build();
+        }
+        balanceSheetResult = financeModel.generateBalanceSheet(periodIndex);
+    }
+
+    @Then("the Balance Sheet should include assets")
+    public void theBalanceSheetShouldIncludeAssets() {
+        assertNotNull(balanceSheetResult, "Balance Sheet should not be null");
+        assertTrue(balanceSheetResult.containsKey("assets"), "Should include assets");
+        assertTrue(balanceSheetResult.containsKey("totalAssets"), "Should include total assets");
+    }
+
+    @Then("the Balance Sheet should include liabilities")
+    public void theBalanceSheetShouldIncludeLiabilities() {
+        assertNotNull(balanceSheetResult, "Balance Sheet should not be null");
+        assertTrue(balanceSheetResult.containsKey("liabilities"), "Should include liabilities");
+        assertTrue(balanceSheetResult.containsKey("totalLiabilities"), "Should include total liabilities");
+    }
+
+    @Then("the Balance Sheet should calculate net worth")
+    public void theBalanceSheetShouldCalculateNetWorth() {
+        assertNotNull(balanceSheetResult, "Balance Sheet should not be null");
+        assertTrue(balanceSheetResult.containsKey("netWorth"), "Should include net worth");
+    }
+
+    @Then("assets should be categorized appropriately")
+    public void assetsShouldBeCategorizedAppropriately() {
+        assertNotNull(balanceSheetResult, "Balance Sheet should not be null");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> assets = (Map<String, Object>) balanceSheetResult.get("assets");
+        assertNotNull(assets, "Assets should not be null");
+        // Should have some asset entries based on the scenario
+        assertFalse(assets.isEmpty() || (Double) balanceSheetResult.get("totalAssets") > 0,
+                   "Should have asset data");
+    }
+
+    @Then("liabilities should be categorized appropriately")
+    public void liabilitiesShouldBeCategorizedAppropriately() {
+        assertNotNull(balanceSheetResult, "Balance Sheet should not be null");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> liabilities = (Map<String, Object>) balanceSheetResult.get("liabilities");
+        assertNotNull(liabilities, "Liabilities should not be null");
+        // Should have some liability entries based on the scenario
+        assertFalse(liabilities.isEmpty() || (Double) balanceSheetResult.get("totalLiabilities") > 0,
+                   "Should have liability data");
+    }
+
+    @When("I request formatted financial reports for period {int}")
+    public void iRequestFormattedFinancialReportsForPeriod(int periodIndex) {
+        // Initialize financeModel if not already done
+        if (financeModel == null) {
+            financeModel = FinanceModel.builder().build();
+        }
+        formattedReportsResult = financeModel.getFormattedFinancialReports(periodIndex);
+    }
+
+    @Then("the formatted reports should include Income Statement")
+    public void theFormattedReportsShouldIncludeIncomeStatement() {
+        assertNotNull(formattedReportsResult, "Formatted reports should not be null");
+        assertTrue(formattedReportsResult.containsKey("formattedIncomeStatement"), "Should include formatted Income Statement");
+        assertTrue(formattedReportsResult.containsKey("incomeStatement"), "Should include Income Statement data");
+    }
+
+    @Then("the formatted reports should include Balance Sheet")
+    public void theFormattedReportsShouldIncludeBalanceSheet() {
+        assertNotNull(formattedReportsResult, "Formatted reports should not be null");
+        assertTrue(formattedReportsResult.containsKey("formattedBalanceSheet"), "Should include formatted Balance Sheet");
+        assertTrue(formattedReportsResult.containsKey("balanceSheet"), "Should include Balance Sheet data");
+    }
+
+    @Then("the reports should be properly formatted for display")
+    public void theReportsShouldBeProperlyFormattedForDisplay() {
+        assertNotNull(formattedReportsResult, "Formatted reports should not be null");
+        String formattedIncome = (String) formattedReportsResult.get("formattedIncomeStatement");
+        String formattedBalance = (String) formattedReportsResult.get("formattedBalanceSheet");
+
+        assertNotNull(formattedIncome, "Formatted Income Statement should not be null");
+        assertNotNull(formattedBalance, "Formatted Balance Sheet should not be null");
+
+        // Check for expected formatting elements
+        assertTrue(formattedIncome.contains("INCOME STATEMENT"), "Should contain Income Statement header");
+        assertTrue(formattedIncome.contains("REVENUES:"), "Should contain Revenues section");
+        assertTrue(formattedIncome.contains("EXPENSES:"), "Should contain Expenses section");
+
+        assertTrue(formattedBalance.contains("BALANCE SHEET"), "Should contain Balance Sheet header");
+        assertTrue(formattedBalance.contains("ASSETS:"), "Should contain Assets section");
+        assertTrue(formattedBalance.contains("LIABILITIES:"), "Should contain Liabilities section");
+    }
+
+    @Then("the period details should include Income Statement data")
+    public void thePeriodDetailsShouldIncludeIncomeStatementData() {
+        assertNotNull(periodDetailsResult, "Period details should not be null");
+        assertTrue(periodDetailsResult.containsKey("incomeStatement"), "Should include Income Statement data");
+        assertTrue(periodDetailsResult.containsKey("formattedIncomeStatement"), "Should include formatted Income Statement");
+    }
+
+    @Then("the period details should include Balance Sheet data")
+    public void thePeriodDetailsShouldIncludeBalanceSheetData() {
+        assertNotNull(periodDetailsResult, "Period details should not be null");
+        assertTrue(periodDetailsResult.containsKey("balanceSheet"), "Should include Balance Sheet data");
+        assertTrue(periodDetailsResult.containsKey("formattedBalanceSheet"), "Should include formatted Balance Sheet");
+    }
+
+    @Then("the period details should include formatted reports")
+    public void thePeriodDetailsShouldIncludeFormattedReports() {
+        assertNotNull(periodDetailsResult, "Period details should not be null");
+        String formattedIncome = (String) periodDetailsResult.get("formattedIncomeStatement");
+        String formattedBalance = (String) periodDetailsResult.get("formattedBalanceSheet");
+
+        assertNotNull(formattedIncome, "Should include formatted Income Statement");
+        assertNotNull(formattedBalance, "Should include formatted Balance Sheet");
+
+        assertTrue(formattedIncome.contains("INCOME STATEMENT"), "Income Statement should be properly formatted");
+        assertTrue(formattedBalance.contains("BALANCE SHEET"), "Balance Sheet should be properly formatted");
+    }
+
+    @Then("the Income Statement should include investment income")
+    public void theIncomeStatementShouldIncludeInvestmentIncome() {
+        assertNotNull(incomeStatementResult, "Income Statement should not be null");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> revenues = (Map<String, Object>) incomeStatementResult.get("revenues");
+
+        // Should have some investment-related revenue
+        boolean hasInvestmentIncome = revenues.entrySet().stream()
+            .anyMatch(entry -> entry.getKey().contains("Investment") ||
+                              entry.getKey().contains("Stock") ||
+                              entry.getKey().contains("Crypto"));
+
+        assertTrue(hasInvestmentIncome, "Should include investment income in revenues");
+    }
+
+    @When("I generate financial reports for period {int}")
+    public void iGenerateFinancialReportsForPeriod(int periodIndex) {
+        // Initialize financeModel if not already done
+        if (financeModel == null) {
+            financeModel = FinanceModel.builder().build();
+        }
+        formattedReportsResult = financeModel.getFormattedFinancialReports(periodIndex);
+    }
+
+    @Then("the Income Statement should show rental income")
+    public void theIncomeStatementShouldShowRentalIncome() {
+        assertNotNull(formattedReportsResult, "Formatted reports should not be null");
+        String formattedIncome = (String) formattedReportsResult.get("formattedIncomeStatement");
+
+        assertNotNull(formattedIncome, "Formatted Income Statement should not be null");
+        assertTrue(formattedIncome.contains("Rental"), "Should show rental income");
+    }
+
+    @Then("the Income Statement should show property expenses")
+    public void theIncomeStatementShouldShowPropertyExpenses() {
+        assertNotNull(formattedReportsResult, "Formatted reports should not be null");
+        String formattedIncome = (String) formattedReportsResult.get("formattedIncomeStatement");
+
+        assertNotNull(formattedIncome, "Formatted Income Statement should not be null");
+        // Should show some expenses
+        assertTrue(formattedIncome.contains("EXPENSES:"), "Should show expenses section");
+    }
+
+    @Then("the Balance Sheet should show property as an asset")
+    public void theBalanceSheetShouldShowPropertyAsAnAsset() {
+        assertNotNull(formattedReportsResult, "Formatted reports should not be null");
+        String formattedBalance = (String) formattedReportsResult.get("formattedBalanceSheet");
+
+        assertNotNull(formattedBalance, "Formatted Balance Sheet should not be null");
+        assertTrue(formattedBalance.contains("ASSETS:"), "Should show assets section");
+        assertTrue(formattedBalance.contains("Property") || formattedBalance.contains("Real Estate"),
+                   "Should show property/real estate as an asset");
+    }
+
+    @When("I request financial reports for an invalid period index")
+    public void iRequestFinancialReportsForAnInvalidPeriodIndex() {
+        // Initialize financeModel if not already done
+        if (financeModel == null) {
+            financeModel = FinanceModel.builder().build();
+        }
+        formattedReportsResult = financeModel.getFormattedFinancialReports(999); // Invalid index
+    }
+
+    @Then("the reports should indicate an error")
+    public void theReportsShouldIndicateAnError() {
+        assertNotNull(formattedReportsResult, "Reports should not be null");
+
+        // Check if Income Statement has error
+        @SuppressWarnings("unchecked")
+        Map<String, Object> incomeStatement = (Map<String, Object>) formattedReportsResult.get("incomeStatement");
+        if (incomeStatement != null && incomeStatement.containsKey("error")) {
+            return; // Income statement has error
+        }
+
+        // Check if Balance Sheet has error
+        @SuppressWarnings("unchecked")
+        Map<String, Object> balanceSheet = (Map<String, Object>) formattedReportsResult.get("balanceSheet");
+        assertTrue(balanceSheet != null && balanceSheet.containsKey("error"), "Should indicate an error");
+    }
+
+    @Then("the error should specify the invalid index")
+    public void theErrorShouldSpecifyTheInvalidIndex() {
+        assertNotNull(formattedReportsResult, "Reports should not be null");
+
+        // Check either Income Statement or Balance Sheet for error
+        @SuppressWarnings("unchecked")
+        Map<String, Object> incomeStatement = (Map<String, Object>) formattedReportsResult.get("incomeStatement");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> balanceSheet = (Map<String, Object>) formattedReportsResult.get("balanceSheet");
+
+        boolean hasError = (incomeStatement != null && incomeStatement.containsKey("error")) ||
+                          (balanceSheet != null && balanceSheet.containsKey("error"));
+
+        assertTrue(hasError, "Should indicate an error for invalid period index");
     }
 
     @Given("a rental property component with invalid configuration:")

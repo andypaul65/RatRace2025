@@ -477,6 +477,31 @@ public class FinanceModel {
             if (timeline.getPeriods().size() > 10) {
                 System.out.println("... (" + (timeline.getPeriods().size() - 10) + " more periods)");
             }
+
+            // Show sample financial reports for final period
+            int finalPeriodIndex = timeline.getPeriods().size() - 1;
+            System.out.println("\n=== SAMPLE FINANCIAL REPORTS (Final Period) ===");
+            Map<String, Object> reports = getFormattedFinancialReports(finalPeriodIndex);
+
+            System.out.println("Use getPeriodDetails(index) for complete period information");
+            System.out.println("Use generateIncomeStatement(index) for Income Statement data");
+            System.out.println("Use generateBalanceSheet(index) for Balance Sheet data");
+            System.out.println("Use getFormattedFinancialReports(index) for formatted reports");
+            System.out.println();
+
+            // Show a brief version of the reports
+            if (reports.containsKey("formattedIncomeStatement")) {
+                String incomeReport = (String) reports.get("formattedIncomeStatement");
+                // Show just the key lines
+                String[] lines = incomeReport.split("\n");
+                System.out.println("INCOME STATEMENT SUMMARY:");
+                for (int i = 0; i < Math.min(lines.length, 8); i++) {
+                    System.out.println("  " + lines[i]);
+                }
+                if (lines.length > 8) {
+                    System.out.println("  ... (use formatted reports for full details)");
+                }
+            }
         }
 
         // Simple Sankey ASCII representation
@@ -654,6 +679,13 @@ public class FinanceModel {
         if (periodIndex > 0) {
             periodDetails.put("investmentSummary", generatePeriodInvestmentSummary(periodIndex));
         }
+
+        // Add simplified financial reports
+        Map<String, Object> financialReports = getFormattedFinancialReports(periodIndex);
+        periodDetails.put("incomeStatement", financialReports.get("incomeStatement"));
+        periodDetails.put("balanceSheet", financialReports.get("balanceSheet"));
+        periodDetails.put("formattedIncomeStatement", financialReports.get("formattedIncomeStatement"));
+        periodDetails.put("formattedBalanceSheet", financialReports.get("formattedBalanceSheet"));
 
         return periodDetails;
     }
@@ -895,6 +927,191 @@ public class FinanceModel {
         }
 
         return comparison;
+    }
+
+    /**
+     * Generate a simplified Income Statement for a specific period
+     */
+    public Map<String, Object> generateIncomeStatement(int periodIndex) {
+        Map<String, Object> incomeStatement = new HashMap<>();
+
+        if (timeline == null || timeline.getPeriods() == null ||
+            periodIndex < 0 || periodIndex >= timeline.getPeriods().size()) {
+            incomeStatement.put("error", "Invalid period index: " + periodIndex);
+            return incomeStatement;
+        }
+
+        TimePeriod period = timeline.getPeriods().get(periodIndex);
+
+        // Initialize income and expense categories
+        Map<String, Object> revenues = new HashMap<>();
+        Map<String, Object> expenses = new HashMap<>();
+
+        double totalRevenue = 0.0;
+        double totalExpenses = 0.0;
+
+        if (scenario != null && scenario.getInitialEntities() != null) {
+            for (Entity entity : scenario.getInitialEntities()) {
+                PeriodEntityAggregate agg = period.getPeriodEntityAggregate(entity);
+                if (agg != null) {
+                    double balance = agg.getNetBalance();
+                    String category = entity.getPrimaryCategory();
+                    String detailedCategory = entity.getDetailedCategory();
+
+                    if ("Income".equals(category)) {
+                        // Income entities show inflows (positive amounts)
+                        revenues.put(detailedCategory, balance);
+                        totalRevenue += balance;
+                    } else if ("Expense".equals(category)) {
+                        // Expense entities show outflows (negative amounts, but display as positive)
+                        expenses.put(detailedCategory, Math.abs(balance));
+                        totalExpenses += Math.abs(balance);
+                    }
+                }
+            }
+        }
+
+        // Calculate net income
+        double netIncome = totalRevenue - totalExpenses;
+
+        incomeStatement.put("periodIndex", periodIndex);
+        incomeStatement.put("revenues", revenues);
+        incomeStatement.put("totalRevenue", totalRevenue);
+        incomeStatement.put("expenses", expenses);
+        incomeStatement.put("totalExpenses", totalExpenses);
+        incomeStatement.put("netIncome", netIncome);
+
+        return incomeStatement;
+    }
+
+    /**
+     * Generate a simplified Balance Sheet for a specific period
+     */
+    public Map<String, Object> generateBalanceSheet(int periodIndex) {
+        Map<String, Object> balanceSheet = new HashMap<>();
+
+        if (timeline == null || timeline.getPeriods() == null ||
+            periodIndex < 0 || periodIndex >= timeline.getPeriods().size()) {
+            balanceSheet.put("error", "Invalid period index: " + periodIndex);
+            return balanceSheet;
+        }
+
+        TimePeriod period = timeline.getPeriods().get(periodIndex);
+
+        // Initialize asset and liability categories
+        Map<String, Object> assets = new HashMap<>();
+        Map<String, Object> liabilities = new HashMap<>();
+
+        double totalAssets = 0.0;
+        double totalLiabilities = 0.0;
+
+        if (scenario != null && scenario.getInitialEntities() != null) {
+            for (Entity entity : scenario.getInitialEntities()) {
+                PeriodEntityAggregate agg = period.getPeriodEntityAggregate(entity);
+                if (agg != null) {
+                    double balance = agg.getNetBalance();
+                    String category = entity.getPrimaryCategory();
+                    String detailedCategory = entity.getDetailedCategory();
+
+                    if ("Asset".equals(category)) {
+                        assets.put(detailedCategory + " - " + entity.getName(), balance);
+                        totalAssets += balance;
+                    } else if ("Liability".equals(category)) {
+                        liabilities.put(detailedCategory + " - " + entity.getName(), Math.abs(balance));
+                        totalLiabilities += Math.abs(balance);
+                    }
+                }
+            }
+        }
+
+        // Calculate net worth
+        double netWorth = totalAssets - totalLiabilities;
+
+        balanceSheet.put("periodIndex", periodIndex);
+        balanceSheet.put("assets", assets);
+        balanceSheet.put("totalAssets", totalAssets);
+        balanceSheet.put("liabilities", liabilities);
+        balanceSheet.put("totalLiabilities", totalLiabilities);
+        balanceSheet.put("netWorth", netWorth);
+
+        return balanceSheet;
+    }
+
+    /**
+     * Generate formatted financial reports for display
+     */
+    public Map<String, Object> getFormattedFinancialReports(int periodIndex) {
+        Map<String, Object> reports = new HashMap<>();
+
+        Map<String, Object> incomeStatement = generateIncomeStatement(periodIndex);
+        Map<String, Object> balanceSheet = generateBalanceSheet(periodIndex);
+
+        // Format Income Statement for display
+        StringBuilder incomeReport = new StringBuilder();
+        incomeReport.append("INCOME STATEMENT - Period ").append(periodIndex).append("\n");
+        incomeReport.append("=".repeat(50)).append("\n");
+
+        if (!incomeStatement.containsKey("error")) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> revenues = (Map<String, Object>) incomeStatement.get("revenues");
+            double totalRevenue = (Double) incomeStatement.get("totalRevenue");
+
+            incomeReport.append("REVENUES:\n");
+            revenues.forEach((category, amount) ->
+                incomeReport.append(String.format("  %-25s $%10.2f\n", category, (Double) amount)));
+            incomeReport.append(String.format("  %-25s $%10.2f\n", "TOTAL REVENUE", totalRevenue));
+            incomeReport.append("\n");
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> expenses = (Map<String, Object>) incomeStatement.get("expenses");
+            double totalExpenses = (Double) incomeStatement.get("totalExpenses");
+
+            incomeReport.append("EXPENSES:\n");
+            expenses.forEach((category, amount) ->
+                incomeReport.append(String.format("  %-25s $%10.2f\n", category, (Double) amount)));
+            incomeReport.append(String.format("  %-25s $%10.2f\n", "TOTAL EXPENSES", totalExpenses));
+            incomeReport.append("\n");
+
+            double netIncome = (Double) incomeStatement.get("netIncome");
+            incomeReport.append(String.format("NET INCOME (LOSS): %25s $%10.2f\n", "", netIncome));
+        }
+
+        // Format Balance Sheet for display
+        StringBuilder balanceReport = new StringBuilder();
+        balanceReport.append("BALANCE SHEET - Period ").append(periodIndex).append("\n");
+        balanceReport.append("=".repeat(50)).append("\n");
+
+        if (!balanceSheet.containsKey("error")) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> assets = (Map<String, Object>) balanceSheet.get("assets");
+            double totalAssets = (Double) balanceSheet.get("totalAssets");
+
+            balanceReport.append("ASSETS:\n");
+            assets.forEach((category, amount) ->
+                balanceReport.append(String.format("  %-35s $%10.2f\n", category, (Double) amount)));
+            balanceReport.append(String.format("  %-35s $%10.2f\n", "TOTAL ASSETS", totalAssets));
+            balanceReport.append("\n");
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> liabilities = (Map<String, Object>) balanceSheet.get("liabilities");
+            double totalLiabilities = (Double) balanceSheet.get("totalLiabilities");
+
+            balanceReport.append("LIABILITIES:\n");
+            liabilities.forEach((category, amount) ->
+                balanceReport.append(String.format("  %-35s $%10.2f\n", category, (Double) amount)));
+            balanceReport.append(String.format("  %-35s $%10.2f\n", "TOTAL LIABILITIES", totalLiabilities));
+            balanceReport.append("\n");
+
+            double netWorth = (Double) balanceSheet.get("netWorth");
+            balanceReport.append(String.format("NET WORTH: %40s $%10.2f\n", "", netWorth));
+        }
+
+        reports.put("incomeStatement", incomeStatement);
+        reports.put("balanceSheet", balanceSheet);
+        reports.put("formattedIncomeStatement", incomeReport.toString());
+        reports.put("formattedBalanceSheet", balanceReport.toString());
+
+        return reports;
     }
 
     public static void main(String[] args) {
