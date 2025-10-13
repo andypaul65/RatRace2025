@@ -91,6 +91,132 @@ public class ComponentRegistry {
 - `RecurringEvent: property_tax` - Annual property tax payments
 - `RecurringEvent: insurance` - Annual insurance payments
 
+### Person Component
+
+#### Configuration Schema
+
+```json
+{
+  "type": "person",
+  "id": "john_doe",
+  "firstName": "John",
+  "lastName": "Doe",
+  "dateOfBirth": "1985-06-15",
+  "maritalStatus": "MARRIED",
+  "taxCode": "1257L",
+  "personalAllowance": 12570.00,
+  "marriageAllowance": 0.00,
+  "blindPersonsAllowance": 0.00,
+  "salaryEntities": ["john_salary"],
+  "pensionEntities": ["john_pension"],
+  "dividendEntities": ["john_dividends"],
+  "ownedAssets": ["primary_residence_property", "investment_portfolio"],
+  "ownedLiabilities": ["primary_residence_mortgage"],
+  "taxYear": 2024
+}
+```
+
+#### Generated Entities and Events
+
+**Entities Created:**
+- `Income: john_doe_tax_calculation` - Personal tax expense tracking
+- `Expense: john_doe_personal_allowance` - Tax allowance utilization
+- `Income: john_doe_salary_income` - Salary income aggregation (linked)
+- `Income: john_doe_pension_income` - Pension income aggregation (linked)
+- `Income: john_doe_dividend_income` - Dividend income aggregation (linked)
+
+**Events Created:**
+- `CalculationEvent: uk_tax_calculation` - Annual UK tax calculation (Income Tax + NI + CGT)
+- `RecurringEvent: personal_allowance_update` - Annual allowance updates
+- `ConditionalEvent: tax_efficiency_check` - Tax optimization suggestions
+
+#### Tax Calculation Integration
+
+The Person component integrates with the UKTaxCalculator to automatically calculate:
+
+- **Income Tax**: Basic (20%), Higher (40%), Additional (45%) rates
+- **National Insurance**: Employee contributions with thresholds
+- **Capital Gains Tax**: Annual exemption and rate bands
+- **Scottish Rates**: Separate tax system for Scottish taxpayers
+- **Tax Efficiency**: Effective tax rate monitoring and optimization suggestions
+
+#### Income Source Linking
+
+Person components automatically link to specified income entities:
+- Salary entities contribute to employment income
+- Pension entities contribute to pension income
+- Dividend entities contribute to investment income
+- Capital gains from owned assets are tracked
+
+### Investment Portfolio Inflation Handling
+
+RatRace2025 models the impact of inflation on different investment types, recognizing that not all investments are equally affected by inflation:
+
+#### Investment Type Inflation Behavior
+
+```plantuml
+@startuml Investment Inflation Handling
+!theme plain
+skinparam backgroundColor #FEFEFE
+
+rectangle "Traditional Investments\n(Affected by Inflation)" as Traditional {
+  rectangle "Stocks" as Stocks
+  rectangle "Bonds" as Bonds
+  rectangle "Options" as Options
+}
+
+rectangle "Cryptocurrency\n(Inflation-Immune)" as Crypto {
+  rectangle "Bitcoin" as BTC
+  rectangle "Ethereum" as ETH
+  rectangle "Other Crypto" as Other
+}
+
+rectangle "Inflation Adjustment Logic" as Logic {
+  rectangle "Real Return = Nominal Return - Inflation" as Formula
+}
+
+Traditional --> Logic : apply inflation penalty
+Crypto --> Logic : skip inflation adjustment
+@enduml
+```
+
+#### Inflation Calculation Details
+
+**For Traditional Investments (Stocks, Bonds, Options):**
+```
+Nominal Return = Current Balance × Expected Return × Random Factor
+Inflation Adjustment = Current Balance × Inflation Rate
+Real Return = Nominal Return - Inflation Adjustment
+```
+
+**For Cryptocurrency:**
+```
+Nominal Return = Current Balance × Expected Return × Random Factor
+Real Return = Nominal Return (no inflation adjustment)
+```
+
+#### Example Impact
+
+Consider a £100,000 investment with 7% expected return and 2% inflation:
+
+**Traditional Investment (Stocks):**
+- Nominal return: £100,000 × 7% = £7,000
+- Inflation adjustment: £100,000 × 2% = £2,000
+- Real return: £7,000 - £2,000 = £5,000
+- New balance: £100,000 + £5,000 = £105,000
+
+**Cryptocurrency:**
+- Nominal return: £100,000 × 7% = £7,000
+- No inflation adjustment
+- Real return: £7,000
+- New balance: £100,000 + £7,000 = £107,000
+
+#### Economic Rationale
+
+- **Traditional Investments**: Bond yields, stock dividends, and real estate rents are typically inflation-adjusted
+- **Cryptocurrency**: Digital assets operate in a global, deflationary monetary policy environment
+- **Real Returns**: What matters for purchasing power and wealth preservation
+
 ## Fluent API for Scenario Building
 
 ### Basic Usage
@@ -121,10 +247,18 @@ Scenario scenario = Scenario.builder()
 ```java
 Scenario scenario = Scenario.builder()
     .component(Person.builder()
-        .name("John Doe")
-        .salary(75000)
-        .retirementContribution(0.08)
-        .emergencyFundTarget(6) // 6 months of expenses
+        .id("john_doe")
+        .firstName("John")
+        .lastName("Doe")
+        .dateOfBirth(LocalDate.of(1985, 6, 15))
+        .maritalStatus(Person.MaritalStatus.MARRIED)
+        .taxCode("1257L")
+        .personalAllowance(12570.00)
+        .salaryEntities(List.of("john_salary"))
+        .pensionEntities(List.of("john_pension"))
+        .dividendEntities(List.of("john_dividends"))
+        .ownedAssets(List.of("rental_1_property"))
+        .ownedLiabilities(List.of("rental_1_mortgage"))
         .build())
     .component(RentalProperty.builder()
         .id("rental_1")
@@ -156,14 +290,18 @@ Scenario scenario = Scenario.builder()
 - **Events**: Appreciation, mortgage payments, rent collection, maintenance costs
 
 ### 2. InvestmentPortfolio
-- **Purpose**: Model investment accounts with contributions and returns
-- **Entities**: Investment account asset
-- **Events**: Monthly contributions, investment returns
+- **Purpose**: Model investment accounts with contributions, returns, and inflation handling
+- **Entities**: Investment account asset with type-specific characteristics
+- **Events**: Monthly contributions, investment returns with inflation adjustments
+- **Investment Types**: Stocks, Bonds, Options (inflation-affected), Crypto (inflation-immune)
+- **Inflation Handling**: Traditional investments have returns reduced by inflation; crypto maintains nominal returns
 
 ### 3. Person
-- **Purpose**: Model individual income and expenses
-- **Entities**: Checking account, savings, retirement accounts
-- **Events**: Salary deposits, expense payments, retirement contributions
+- **Purpose**: Model UK taxpayers with comprehensive tax context and income sources
+- **Entities**: Salary income, pension income, dividend income, personal tax expense, NI expense, CGT expense
+- **Events**: UK tax calculations, allowance utilization, tax efficiency monitoring
+- **Tax Context**: 2024/25 UK tax rules, Income Tax, National Insurance, Capital Gains Tax
+- **Features**: Tax code management, personal allowances, Scottish tax rates, tax optimization
 
 ### 4. Business
 - **Purpose**: Model small business operations
@@ -231,10 +369,11 @@ RentalProperty[rental_2]: Suburban house generating $2,200/month
   - Mortgage: $187,500 at 4.2% (30-year term)
   - Monthly Rent: $2,200 (95% occupancy)
 
-Person[john_doe]: Primary income earner
-  - Annual Salary: $75,000
-  - Retirement Contribution: 8%
-  - Emergency Fund Target: 6 months expenses
+Person[john_doe]: UK taxpayer (Married, Tax Code: 1257L)
+  - Personal Allowance: £12,570
+  - Linked Income Sources: Salary, Pension, Dividends
+  - Owned Assets: 2 rental properties
+  - Tax Year: 2024/25 (UK rules)
 
 === PORTFOLIO SUMMARY (Year 5) ===
 Total Assets: $485,000
@@ -259,6 +398,22 @@ Annual Retirement: $6,000
 Annual Net Personal Income: $27,000
 
 Total Annual Net Income: $34,800
+
+=== UK TAX SUMMARY (Year 5) ===
+Person[john_doe] Tax Calculation (2024/25):
+  - Gross Income: £82,000 (Salary: £75,000 + Rental: £7,000 + Dividends: £0)
+  - Taxable Income: £69,430 (after £12,570 personal allowance)
+  - Income Tax: £13,886 (Basic: £3,786 + Higher: £10,100)
+  - National Insurance: £5,172 (Employee contributions)
+  - Capital Gains Tax: £0 (within annual exemption)
+  - Total Tax Paid: £19,058
+  - Effective Tax Rate: 23.2%
+  - Tax Efficiency: Good (below 25% threshold)
+
+Tax Optimization Suggestions:
+  - Consider pension contributions to reduce taxable income
+  - Rental income could benefit from property reliefs
+  - Monitor dividend allowance utilization (£1,000 unused)
 ```
 
 ## Component Validation
@@ -269,6 +424,10 @@ Each component implements validation to ensure:
    - Mortgage amounts don't exceed property values
    - Rent payments are reasonable for property values
    - Appreciation rates are realistic
+   - Personal allowances are within UK tax law limits
+   - Tax codes are valid UK formats
+   - Income entity references exist and are accessible
+   - Owned assets/liabilities are properly linked
 
 2. **Data Completeness**
    - Required fields are provided

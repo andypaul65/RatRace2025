@@ -11,7 +11,9 @@ Imagine you're trying to understand your financial future - how your savings gro
 - How your salary flows into savings and investments
 - How mortgage payments reduce your debt over time
 - How investments grow and generate returns
-- How unexpected events (like bonuses or emergencies) affect your overall financial picture
+- How UK taxes (Income Tax, National Insurance, Capital Gains Tax) impact your take-home pay
+- How tax-efficient strategies can optimize your financial outcomes
+- How unexpected events (like bonuses, tax changes, or emergencies) affect your overall financial picture
 
 ### Why It Matters
 
@@ -136,6 +138,15 @@ DM --> UI : supports
 - Asset portfolios with sub-groupings
 - Category-based organization
 - Drill-down capabilities for detailed analysis
+
+#### 5. **UK Tax Modeling**
+- Comprehensive 2024/25 tax rules implementation
+- Income Tax (Basic 20%, Higher 40%, Additional 45%)
+- National Insurance employee contributions
+- Capital Gains Tax with annual exemptions
+- Scottish tax system support
+- Person-centric tax efficiency monitoring
+- Tax optimization suggestions and alerts
 
 ### Data Flow
 

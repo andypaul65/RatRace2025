@@ -96,6 +96,24 @@ rectangle "Expenses\n(Value flowing out)" as Expenses {
     rectangle "Capital Gains Tax"
   }
 }
+
+rectangle "Persons\n(UK Tax Subjects)" as Persons {
+  rectangle "Tax Attributes" as TaxAttr {
+    rectangle "Personal Allowances"
+    rectangle "Tax Codes"
+    rectangle "Marital Status"
+  }
+  rectangle "Income Sources" as IncomeSrc {
+    rectangle "Salary Entities"
+    rectangle "Pension Entities"
+    rectangle "Dividend Entities"
+  }
+  rectangle "Tax Liabilities" as TaxLiab {
+    rectangle "Income Tax"
+    rectangle "National Insurance"
+    rectangle "Capital Gains Tax"
+  }
+}
 @enduml
 ```
 
@@ -428,6 +446,8 @@ rectangle "Calculation Events" as Calculation {
   rectangle "Interest Accrual"
   rectangle "Fee Assessment"
   rectangle "Performance Calculation"
+  rectangle "UK Tax Calculation"
+  rectangle "Tax Efficiency Analysis"
 }
 
 Recurring --> Flow : generates

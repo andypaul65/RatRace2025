@@ -296,9 +296,84 @@ note right of CalculationEvent
   - Mortgage interest calculation
   - Investment return calculations
   - Fee assessments and penalties
+  - UK tax calculations (Income Tax, NI, CGT)
+  - Tax efficiency analysis and optimization
 end note
 @enduml
 ```
+
+### UK Tax Calculation Events
+
+UK tax calculations are processed annually and involve complex multi-step computations:
+
+```plantuml
+@startuml UK Tax Processing
+!theme plain
+skinparam backgroundColor #FEFEFE
+
+start
+:UK Tax Calculation Event Triggered
+(annual, April 6th tax year end);
+
+:Gather Person's Income Sources
+- Salary entities linked to person
+- Pension entities
+- Dividend entities
+- Capital gains from owned assets;
+
+:Aggregate Income by Type
+salaryIncome += entity.balance
+pensionIncome += entity.balance
+dividendIncome += entity.balance
+capitalGains += assetGains;
+
+:Apply Tax Allowances
+- Personal Allowance (£12,570)
+- Marriage Allowance (if applicable)
+- Blind Person's Allowance
+taxableIncome = grossIncome - allowances;
+
+:Calculate Income Tax
+if (taxableIncome > 50270) then
+  basicTax = 50270 * 0.20
+  higherTax = (taxableIncome - 50270) * 0.40
+else if (taxableIncome > 12570)
+  basicTax = (taxableIncome - 12570) * 0.20
+endif;
+
+:Calculate National Insurance
+ni = calculateNIContributions(salaryIncome);
+
+:Calculate Capital Gains Tax
+cgt = calculateCGT(capitalGains, annualExemption);
+
+:Compute Total Tax Liability
+totalTax = incomeTax + ni + cgt;
+
+:Update Person Tax Results
+person.setTaxResults(grossIncome, taxableIncome,
+                    incomeTax, ni, cgt);
+
+:Generate Tax Expense Flows
+createFlow(person, taxExpenseEntity, totalTax);
+
+:Calculate Tax Efficiency Metrics
+effectiveRate = (totalTax / grossIncome) * 100
+taxEfficiencyScore = assessEfficiency(effectiveRate);
+
+:Store Results for Reporting
+and optimization suggestions;
+end
+@enduml
+```
+
+**Key Features:**
+- **Annual Processing**: Tax calculations run once per simulated year
+- **Multi-Income Aggregation**: Combines salary, pension, dividends, and capital gains
+- **Progressive Taxation**: Applies correct tax brackets and rates
+- **Allowance Optimization**: Automatically utilizes available tax allowances
+- **Scottish Tax Support**: Handles different Scottish tax rates and thresholds
+- **Efficiency Monitoring**: Tracks effective tax rates and suggests optimizations
 
 ## State Management and Versioning
 
