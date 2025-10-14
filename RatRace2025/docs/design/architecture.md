@@ -1,5 +1,7 @@
 # RatRace2025 - Technical Architecture
 
+**Last Updated**: 2025-10-14
+
 ## Non-Technical Perspective
 
 Think of RatRace2025's architecture like a well-designed factory. The factory has different departments (layers) that each handle specific tasks, with clear interfaces between them. Raw materials (financial data) enter one end, get processed through various stages, and emerge as finished products (simulation results and visualizations).
@@ -517,3 +519,23 @@ G --> DL : caching
 ```
 
 This architecture provides a solid foundation for financial modeling while maintaining flexibility for future enhancements and UI integrations.
+
+## Performance Considerations
+
+### Caching Strategy
+- **Guava Cache**: Used for expensive `PeriodEntityAggregate` calculations to avoid redundant computations.
+- **Cache Configuration**: Maximum size limits and LRU eviction for memory efficiency.
+
+### Parallel Processing
+- **ForkJoinPool**: Employed for processing independent entities/events in large simulations.
+- **Thread Safety**: Immutable objects and synchronized critical sections prevent race conditions.
+
+### Scalability
+- **Streaming APIs**: Java streams for efficient processing of large datasets.
+- **Lazy Evaluation**: Components created on-demand to reduce memory footprint.
+
+## See Also
+- **[backend-development-guide.md](backend-development-guide.md)**: Incremental development phases
+- **[entities-and-flows.md](entities-and-flows.md)**: Domain object relationships
+- **[simulation-engine.md](simulation-engine.md)**: Runtime processing details
+- **[ui-visualization.md](../ui-visualization.md)**: Data structure integration

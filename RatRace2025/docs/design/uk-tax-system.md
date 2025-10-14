@@ -1,5 +1,7 @@
 # UK Tax System Implementation
 
+**Last Updated**: 2025-10-14
+
 ## Overview
 
 RatRace2025 implements a comprehensive UK tax calculation engine that accurately models the UK's progressive tax system for individuals. The system handles Income Tax, National Insurance contributions, and Capital Gains Tax calculations based on the 2024/25 tax year rules.
@@ -466,14 +468,49 @@ public void testScottishTaxpayer() {
 - [ ] Tax year straddling calculations
 - [ ] Automatic tax payment planning
 
+## Code Examples
+
+### Basic Tax Calculation
+```java
+// Calculate tax for a basic rate taxpayer
+Person person = Person.builder()
+    .taxCode("1257L")
+    .personalAllowance(12570.00)
+    .build();
+
+UKTaxCalculator calculator = new UKTaxCalculator();
+TaxCalculationResult result = calculator.calculateTotalTax(
+    person,
+    40000.0,  // salary
+    0.0,      // pension
+    0.0,      // dividends
+    0.0       // capital gains
+);
+
+System.out.println("Income Tax: £" + result.getIncomeTax());
+System.out.println("NI Contributions: £" + result.getNationalInsurance());
+System.out.println("Effective Rate: " + result.getEffectiveTaxRate() + "%");
+```
+
+### Repository Integration
+For integration with Spring Data repositories, see the project repository at https://github.com/example/ratrace2025 for complete examples.
+
 ## Compliance and Accuracy
 
 The UK tax implementation aims to accurately reflect 2024/25 tax rules as published by HMRC. However:
 
 ⚠️ **Important**: This is a simulation tool for educational and planning purposes. It should not be used as a substitute for professional tax advice or official HMRC calculations. Tax rules can change, and individual circumstances may qualify for additional reliefs or have special considerations not modeled here.
 
+**Note**: UK tax rules change annually. For the latest rules, consult the official HMRC website at https://www.gov.uk/government/organisations/hm-revenue-customs.
+
 ### Validation Sources
 - HMRC Tax Tables 2024/25
 - Official UK Government tax documentation
 - Professional tax calculation references
 - Cross-verification with multiple tax calculation tools
+
+## See Also
+- **[financial-reporting.md](financial-reporting.md)**: How tax calculations integrate with financial reports
+- **[scenario-composition.md](scenario-composition.md)**: Person components with tax attributes
+- **[entities-and-flows.md](entities-and-flows.md)**: Tax-related entity modeling
+- **[backend-development-guide.md](backend-development-guide.md)**: Implementation phases

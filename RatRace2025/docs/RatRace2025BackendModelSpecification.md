@@ -1,5 +1,9 @@
 # RatRace2025 Backend Model Design Specification
 
+**Last Updated**: 2025-10-14
+
+**Note**: Content has been reorganized. See [backend-development-guide.md](design/backend-development-guide.md) for incremental development phases and best practices.
+
 ### Requirements Analysis
 
 To incorporate the request for improvements, command-line output, detailed design, and phased development, we'll refine requirements using an agile-inspired elicitation process: (1) Elicit new elements as user stories from the query (e.g., text-based model visualization), (2) Prioritize based on dependencies (e.g., core model before outputs), (3) Integrate with prior stories like dynamic creation, ensuring the "clockwork" scenario determinism. Analogous to Java's Factory pattern, the detailed design acts as a central creator producing blueprints, while phased steps are like Builder pattern increments for step-by-step assembly.
@@ -183,3 +187,9 @@ These phases are designed for AI-assisted coding (e.g., feed into Cursor/Grok on
 10. **Phase 10: Extensibility and Refinements**
     - Integrate Drools if needed; add Builder for Scenario.
     - Optimize for large data; document API.
+
+## See Also
+- **[backend-development-guide.md](design/backend-development-guide.md)**: Focused guide on development phases
+- **[architecture.md](design/architecture.md)**: Technical architecture overview
+- **[entities-and-flows.md](design/entities-and-flows.md)**: Domain modeling
+- **[simulation-engine.md](design/simulation-engine.md)**: Simulation mechanics

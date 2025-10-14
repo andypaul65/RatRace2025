@@ -1,5 +1,7 @@
 # Financial Reporting - Income Statements and Balance Sheets
 
+**Last Updated**: 2025-10-14
+
 ## Overview
 
 RatRace2025 provides comprehensive financial reporting capabilities that generate traditional accounting-style Income Statements and Balance Sheets. These reports are available for individual time periods and aggregated across entire scenarios, enabling detailed analysis of financial performance and position.
@@ -526,3 +528,46 @@ Reports are generated on-demand and cached at the period level to avoid redundan
 - **Forecasting**: Projected financial statements based on trends
 - **Multi-Currency Support**: Reports in different currencies
 - **Tax Impact Analysis**: Detailed tax efficiency breakdowns
+
+## Code Examples
+
+### Generating Reports
+```java
+// Generate income statement for a specific period
+FinanceModel model = new FinanceModel();
+model.loadFromJson("scenario.json");
+model.runSimulation();
+
+Map<String, Object> incomeStatement = model.generateIncomeStatement(12);
+String formatted = model.generateFormattedIncomeStatement(incomeStatement);
+System.out.println(formatted);
+```
+
+### UI Integration
+```javascript
+// Fetch and display financial reports in React component
+const FinancialReports = ({ periodIndex }) => {
+  const [reports, setReports] = useState(null);
+
+  useEffect(() => {
+    apiService.getPeriodDetails(periodIndex)
+      .then(data => setReports(data))
+      .catch(err => console.error('Failed to load reports', err));
+  }, [periodIndex]);
+
+  return (
+    <div>
+      <pre>{reports?.formattedIncomeStatement}</pre>
+      <pre>{reports?.formattedBalanceSheet}</pre>
+    </div>
+  );
+};
+```
+
+For complete repository examples, visit https://github.com/example/ratrace2025.
+
+## See Also
+- **[uk-tax-system.md](uk-tax-system.md)**: Tax calculations integrated into financial reports
+- **[ui-visualization.md](ui-visualization.md)**: How reports are displayed in Sankey diagrams
+- **[simulation-engine.md](simulation-engine.md)**: Data generation process
+- **[backend-development-guide.md](backend-development-guide.md)**: Implementation phases

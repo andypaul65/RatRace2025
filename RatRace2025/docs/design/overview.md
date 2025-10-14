@@ -1,5 +1,7 @@
 # RatRace2025 Financial Modeling Platform - Overview
 
+**Last Updated**: 2025-10-14
+
 ## Non-Technical Introduction
 
 Imagine you're trying to understand your financial future - how your savings grow, how your mortgage balance changes over time, or how different investment decisions might play out over the next 30 years. RatRace2025 is like a financial crystal ball that helps you visualize and understand complex money flows through time.
@@ -195,6 +197,14 @@ For developers contributing to the project, follow these mandatory guidelines:
 - [Framework Patterns](../guidelines/backend-framework-patterns.md) - Design patterns and extension mechanisms
 
 **All development must follow the [Mandatory Pre-Commit Checklist](../guidelines/backend-coding-standards.md#mandatory-pre-commit-checklist) before any commits.**
+
+## See Also
+- **[architecture.md](architecture.md)**: Technical implementation details
+- **[entities-and-flows.md](entities-and-flows.md)**: Domain modeling concepts
+- **[simulation-engine.md](simulation-engine.md)**: How simulations work
+- **[ui-visualization.md](ui-visualization.md)**: Visualization capabilities
+- **[ui-interactions.md](ui-interactions.md)**: User interaction patterns
+- **[backend-development-guide.md](backend-development-guide.md)**: Incremental development phases
 
 ## Next Steps
 
