@@ -1,5 +1,7 @@
 # Coding Standards for MVP Subprojects
 
+**Last Updated**: 2025-10-13
+
 This document outlines the coding standards and best practices for subprojects building on the MVP backplane. It ensures consistency, maintainability, and scalability when extending the MVP framework. Adherence to these guidelines is mandatory, with references to the backplane's core standards. Subprojects should integrate seamlessly with the MVP base layer.
 
 **As a living document, review and update this periodically to align with evolving MVP backplane changes, new subproject needs, and main guideline updates.**
@@ -278,8 +280,14 @@ Always ensure proper `.gitignore` configuration to prevent committing system fil
 - [ ] Logs reviewed for errors or warnings
 - [ ] Build artifacts cleaned (`npm run clean`)
 - [ ] Contract spec updated and synchronized with API changes
+- [ ] Run Cucumber tests locally before push
 - [ ] Commit message clearly describes changes and links to updated docs
 
 **FAILURE TO COMPLETE ANY CHECKLIST ITEM PREVENTS COMMITTING**
 
 Review this document periodically as the project evolves. Non-compliance requires justification in pull requests.
+
+## See Also
+- [Coding Standards](../guidelines/coding-standards.md): Core standards.
+- [Subproject Testing Guidelines](subproject-testing-guidelines.md): Testing practices.
+- [Subproject Integration Guide](subproject-integration-guide.md): Setup details.

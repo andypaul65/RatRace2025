@@ -132,6 +132,32 @@ Focus on server-side testing independent of the client UI for efficient backend 
 - **Minimal REST Endpoint Testing**: Validate core APIs (e.g., GET/POST to /api/state/{namespace}) for functionality. Use Spring Boot's test slices (@WebMvcTest) for controller-only tests.
 - **Backend-First Iterative Stages**: In workflows, test and iterate on server logic first—e.g., unit test services, then integration test endpoints—before client integration. This ensures backend robustness.
 
+## Continuous Integration
+Automate testing in subprojects using CI tools for reliable BDD and overall test runs.
+
+- **Recommended Tools**: GitHub Actions for repository-integrated CI.
+- **GitHub Actions Example**:
+  ```yaml
+  name: CI
+  on: [push, pull_request]
+  jobs:
+    test:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v3
+        - uses: actions/setup-node@v3
+          with:
+            node-version: '18'
+        - run: npm install
+        - run: npm run test:bdd  # Cucumber BDD tests
+        - run: npm test
+        - uses: actions/setup-java@v3
+          with:
+            java-version: '17'
+        - run: mvn test  # Server tests
+  ```
+- **Benefits**: Automated BDD runs ensure business requirements are met on every push. Fails builds if tests don't pass.
+
 ## Integration Testing
 **Integration Guidance**: Start with polling on client, evolving to WebSockets for real-time. Emphasize BDD integration for real-time features.
 
@@ -186,4 +212,9 @@ For UX themes, use snapshot testing or libraries like Percy for regression detec
 - **Documentation Sync**: Keep design documents and test scenarios synchronized.
 - **Pre-Commit Verification**: Never commit without running full test suite including Cucumber tests.
 - **Living Documentation**: Use Cucumber features as executable specifications that stay current.
+
+## See Also
+- [Testing Guidelines](../guidelines/testing-guidelines.md): Core testing practices.
+- [Subproject Coding Standards](subproject-coding-standards.md): Related standards.
+- [Subproject Integration Guide](subproject-integration-guide.md): Setup context.
 ```
