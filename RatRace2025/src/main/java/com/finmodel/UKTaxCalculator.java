@@ -1,5 +1,6 @@
 package com.finmodel;
 
+import lombok.Data;
 import java.time.LocalDate;
 
 /**
@@ -162,10 +163,14 @@ public class UKTaxCalculator {
         // Calculate Capital Gains Tax
         double capitalGainsTax = calculateCapitalGainsTax(capitalGains, grossIncome, person.isScottishTaxpayer());
 
+        // Calculate totals
+        double totalTax = incomeTax + nationalInsurance + capitalGainsTax;
+        double effectiveRate = grossIncome > 0 ? (totalTax / grossIncome) * 100 : 0;
+
         // Update person with tax results
         person.setTaxResults(grossIncome, taxableIncome, incomeTax, nationalInsurance, capitalGainsTax);
 
-        return new TaxCalculationResult(grossIncome, taxableIncome, incomeTax, nationalInsurance, capitalGainsTax);
+        return new TaxCalculationResult(grossIncome, taxableIncome, incomeTax, nationalInsurance, capitalGainsTax, totalTax, effectiveRate);
     }
 
     /**
@@ -206,22 +211,26 @@ public class UKTaxCalculator {
     /**
      * Result class for tax calculations
      */
+    @Data
     public static class TaxCalculationResult {
-        public final double grossIncome;
-        public final double taxableIncome;
-        public final double incomeTax;
-        public final double nationalInsurance;
-        public final double capitalGainsTax;
-        public final double totalTax;
+        private final double grossIncome;
+        private final double taxableIncome;
+        private final double incomeTax;
+        private final double nationalInsurance;
+        private final double capitalGainsTax;
+        private final double totalTaxPaid;
+        private final double effectiveTaxRate;
 
         public TaxCalculationResult(double grossIncome, double taxableIncome, double incomeTax,
-                                  double nationalInsurance, double capitalGainsTax) {
+                                  double nationalInsurance, double capitalGainsTax, double totalTaxPaid,
+                                  double effectiveTaxRate) {
             this.grossIncome = grossIncome;
             this.taxableIncome = taxableIncome;
             this.incomeTax = incomeTax;
             this.nationalInsurance = nationalInsurance;
             this.capitalGainsTax = capitalGainsTax;
-            this.totalTax = incomeTax + nationalInsurance + capitalGainsTax;
+            this.totalTaxPaid = totalTaxPaid;
+            this.effectiveTaxRate = effectiveTaxRate;
         }
     }
 
