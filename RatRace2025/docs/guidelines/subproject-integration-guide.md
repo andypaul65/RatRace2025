@@ -123,7 +123,7 @@ Create custom tabs and register them:
 
 ```typescript
 import React from 'react';
-import { TabConfig, TabbedInterface } from '@ajp/mvp-client';
+import { TabConfig, TabbedInterface } from '@nednederlander/mvp-client';
 
 const myTab: TabConfig = {
   namespace: 'my-feature',
