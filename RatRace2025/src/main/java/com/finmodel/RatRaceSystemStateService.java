@@ -25,19 +25,25 @@ public class RatRaceSystemStateService extends AbstractSystemStateService {
             String type = message.getType();
 
             if ("load_scenario".equals(type)) {
-                // TODO: Integrate with FinanceModel.loadFromJson() - ensure proper error handling
-                FinanceModel model = new FinanceModel();
-                model.loadFromJson(content);
-                simulationResults.put(namespace, model);
+                try {
+                    FinanceModel model = new FinanceModel();
+                    model.loadFromJson(content);
+                    simulationResults.put(namespace, model);
 
-                return MessageDto.builder()
-                        .content("Scenario loaded successfully")
-                        .namespace(namespace)
-                        .type("load_response")
-                        .build();
+                    return MessageDto.builder()
+                            .content("Scenario loaded successfully")
+                            .namespace(namespace)
+                            .type("load_response")
+                            .build();
+                } catch (Exception e) {
+                    return MessageDto.builder()
+                            .content("Failed to load scenario: " + e.getMessage())
+                            .namespace(namespace)
+                            .type("error")
+                            .build();
+                }
 
             } else if ("run_simulation".equals(type)) {
-                // TODO: Integrate with FinanceModel.runSimulation() - handle simulation exceptions
                 FinanceModel model = simulationResults.get(namespace);
                 if (model == null) {
                     return MessageDto.builder()
@@ -47,16 +53,23 @@ public class RatRaceSystemStateService extends AbstractSystemStateService {
                             .build();
                 }
 
-                model.runSimulation();
+                try {
+                    model.runSimulation();
 
-                return MessageDto.builder()
-                        .content("Simulation completed")
-                        .namespace(namespace)
-                        .type("simulation_response")
-                        .build();
+                    return MessageDto.builder()
+                            .content("Simulation completed")
+                            .namespace(namespace)
+                            .type("simulation_response")
+                            .build();
+                } catch (SimulationException e) {
+                    return MessageDto.builder()
+                            .content("Simulation failed: " + e.getMessage())
+                            .namespace(namespace)
+                            .type("error")
+                            .build();
+                }
 
             } else if ("get_dump".equals(type)) {
-                // TODO: Integrate with FinanceModel.dumpToConsole() - capture output properly
                 FinanceModel model = simulationResults.get(namespace);
                 if (model == null) {
                     return MessageDto.builder()
@@ -66,17 +79,25 @@ public class RatRaceSystemStateService extends AbstractSystemStateService {
                             .build();
                 }
 
-                // Capture dump output (in real implementation, would redirect System.out)
-                model.dumpToConsole();
+                try {
+                    // TODO: Implement proper output capture instead of console printing
+                    // For now, print to console as per existing behavior, but return summary
+                    model.dumpToConsole();
 
-                return MessageDto.builder()
-                        .content("Dump printed to console")
-                        .namespace(namespace)
-                        .type("dump_response")
-                        .build();
+                    return MessageDto.builder()
+                            .content("Simulation dump printed to console - see server logs for details")
+                            .namespace(namespace)
+                            .type("dump_response")
+                            .build();
+                } catch (Exception e) {
+                    return MessageDto.builder()
+                            .content("Failed to generate dump: " + e.getMessage())
+                            .namespace(namespace)
+                            .type("error")
+                            .build();
+                }
 
             } else if ("get_sankey".equals(type)) {
-                // TODO: Integrate with FinanceModel.buildSankeyData() - ensure data format matches MVP expectations
                 FinanceModel model = simulationResults.get(namespace);
                 if (model == null) {
                     return MessageDto.builder()
@@ -86,16 +107,23 @@ public class RatRaceSystemStateService extends AbstractSystemStateService {
                             .build();
                 }
 
-                Map<String, Object> sankeyData = model.buildSankeyData();
-                // Convert to JSON string for message content
-                ObjectMapper mapper = new ObjectMapper();
-                String jsonData = mapper.writeValueAsString(sankeyData);
+                try {
+                    Map<String, Object> sankeyData = model.buildSankeyData();
+                    ObjectMapper mapper = new ObjectMapper();
+                    String jsonData = mapper.writeValueAsString(sankeyData);
 
-                return MessageDto.builder()
-                        .content(jsonData)
-                        .namespace(namespace)
-                        .type("sankey_response")
-                        .build();
+                    return MessageDto.builder()
+                            .content(jsonData)
+                            .namespace(namespace)
+                            .type("sankey_response")
+                            .build();
+                } catch (Exception e) {
+                    return MessageDto.builder()
+                            .content("Failed to generate Sankey data: " + e.getMessage())
+                            .namespace(namespace)
+                            .type("error")
+                            .build();
+                }
             }
 
             return MessageDto.builder()
