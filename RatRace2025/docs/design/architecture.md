@@ -1,6 +1,6 @@
 # RatRace2025 - Technical Architecture
 
-**Last Updated**: 2025-10-14
+**Last Updated**: 2025-10-15
 
 ## Non-Technical Perspective
 
@@ -12,9 +12,66 @@ The architecture emphasizes:
 - **Testability**: Each component can be tested in isolation
 - **Maintainability**: Clear separation of concerns makes the codebase easier to understand and modify
 
+## MVP Framework Integration
+
+RatRace2025 is implemented as a subproject within the MVP (Model-View-Presenter) backplane framework. This provides standardized message passing, namespace isolation, and modular integration capabilities.
+
+### MVP Architecture Pattern
+
+```plantuml
+@startuml MVP Integration
+!theme plain
+skinparam backgroundColor #FEFEFE
+
+rectangle "MVP Backplane" as MVP {
+    rectangle "ServiceRegistry" as SR
+    rectangle "Message Bus" as MB
+    rectangle "Namespace Manager" as NM
+}
+
+rectangle "RatRace2025 Subproject" as RR {
+    rectangle "RatRaceSystemStateService" as RSS
+    rectangle "MvpConfiguration" as MC
+    rectangle "Domain Layer" as DL
+}
+
+rectangle "Client Application" as Client {
+    rectangle "TabbedInterface" as TI
+    rectangle "RatRaceFinanceTab" as RFT
+}
+
+Client --> MVP : WebSocket/Message API
+MVP --> RR : Service Calls
+RR --> DL : Domain Operations
+RSS --> SR : Registration
+MC --> SR : Configuration
+
+note right of MVP
+    Centralized message routing
+    and service discovery
+end note
+
+note right of RR
+    MVP-compliant service
+    with domain logic integration
+end note
+@enduml
+```
+
+### MVP Message Contracts
+
+The system uses standardized message contracts defined in `api-contracts.json`:
+
+- **load_scenario**: Load financial scenario configuration
+- **run_simulation**: Execute simulation with loaded scenario
+- **get_dump**: Generate console dump of simulation state
+- **get_sankey**: Produce Sankey diagram data for visualization
+
+All messages include namespace isolation and proper error handling.
+
 ## Technical Architecture Overview
 
-RatRace2025 follows Domain-Driven Design (DDD) principles with a layered architecture, implemented in Java using Spring Boot patterns.
+RatRace2025 follows Domain-Driven Design (DDD) principles with a layered architecture, implemented in Java using Spring Boot patterns and integrated with the MVP backplane framework.
 
 ### System Layers
 
@@ -28,17 +85,23 @@ skinparam rectangle {
     BorderThickness 2
 }
 
-rectangle "Presentation Layer\n(UI/REST APIs)" as PL
+rectangle "MVP Backplane\n(Message Routing)" as MVP
+rectangle "Client Layer\n(React/TypeScript)" as CL
+rectangle "Presentation Layer\n(MVP Services)" as PL
 rectangle "Application Layer\n(Use Cases/Services)" as AL
 rectangle "Domain Layer\n(Business Logic)" as DL
 rectangle "Infrastructure Layer\n(Persistence/External)" as IL
 
-PL --> AL : HTTP/JSON
-AL --> DL : Domain Objects
+CL --> MVP : WebSocket/Messages
+MVP --> PL : Service Calls
+PL --> AL : Domain Objects
+AL --> DL : Business Logic
 DL --> IL : Repository Interfaces
 IL --> DL : Data Access
 @enduml
 ```
+
+The MVP backplane provides the communication layer between client and server, enabling modular subproject architecture with standardized message contracts and namespace isolation.
 
 ### Core Components
 
@@ -49,6 +112,12 @@ skinparam backgroundColor #FEFEFE
 skinparam packageStyle rect
 
 package "com.finmodel" {
+  package "mvp" as MVP {
+    class RatRaceSystemStateService
+    class MvpConfiguration
+    class MessageDto
+  }
+
   package "domain" as Domain {
     class Entity
     class EntityVersion
@@ -70,10 +139,22 @@ package "com.finmodel" {
   }
 }
 
+package "client" {
+  package "src" as ClientSrc {
+    class App
+    class RatRaceFinanceTab
+    class TabbedInterface
+  }
+}
+
+MVP --> Service : integrates with
 Domain --> Service : used by
 Service --> Config : configured by
+ClientSrc --> MVP : communicates via
 @enduml
 ```
+
+The MVP integration layer (`RatRaceSystemStateService`, `MvpConfiguration`) bridges the MVP backplane with the existing domain logic, while the client layer provides the user interface through standardized MVP components.
 
 ## Domain Layer Deep Dive
 
@@ -455,6 +536,68 @@ TimePeriod --> Guava : uses
 - **Caching**: Expensive calculations cached per period
 - **Streaming**: Large datasets processed with Java streams
 - **Immutable Objects**: EntityVersion prevents accidental mutation
+
+## Client Architecture
+
+The client is built with React and TypeScript, integrated with the MVP backplane framework for modular UI development.
+
+### Client Component Structure
+
+```plantuml
+@startuml Client Architecture
+!theme plain
+skinparam backgroundColor #FEFEFE
+
+package "client/src" {
+  class App {
+    +render()
+  }
+
+  class RatRaceFinanceTab {
+    -namespace: string
+    -scenarioJson: string
+    -status: string
+    +loadScenario()
+    +runSimulation()
+    +getDump()
+    +getSankey()
+  }
+
+  interface TabbedInterface {
+    +tabs: TabConfig[]
+  }
+}
+
+package "@ajp/mvp-client" {
+  class TabbedInterface
+  class useMvpClient
+  interface TabConfig {
+    +namespace: string
+    +title: string
+    +component: React.Component
+  }
+}
+
+App --> TabbedInterface : uses
+RatRaceFinanceTab --> useMvpClient : communicates
+TabbedInterface --> RatRaceFinanceTab : renders
+@enduml
+```
+
+### Client-Server Communication
+
+The client communicates with the server exclusively through the MVP backplane:
+
+1. **Message Sending**: Uses `useMvpClient` hook to send typed messages
+2. **Namespace Isolation**: Each tab operates in its own namespace
+3. **Real-time Updates**: WebSocket-based communication for live status
+4. **Error Handling**: Standardized error responses with user feedback
+
+### Build and Development
+
+- **Vite**: Fast development server and optimized production builds
+- **TypeScript**: Type-safe development with MVP client library integration
+- **Proxy Configuration**: Development server proxies API calls to backend
 
 ## Extensibility Points
 

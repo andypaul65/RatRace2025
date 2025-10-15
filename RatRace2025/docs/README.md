@@ -1,8 +1,20 @@
 # RatRace2025 Documentation Index
 
-**Last Updated**: 2025-10-14
+**Last Updated**: 2025-10-15
 
 This is the master index for RatRace2025 project documentation. Documents are grouped by category for easy navigation.
+
+## 🎉 MVP Framework Integration Complete
+
+RatRace2025 has been successfully migrated to the MVP backplane framework as a full-stack subproject. This includes:
+
+- **Backend Integration**: Spring Boot services extending MVP `AbstractSystemStateService`
+- **Client Integration**: React/TypeScript UI using MVP `TabbedInterface` and message passing
+- **API Contracts**: Standardized message schemas in `api-contracts.json`
+- **Testing**: Comprehensive unit and BDD tests for MVP compliance
+- **Documentation**: Updated architecture reflecting MVP integration
+
+See the [subproject-integration-guide.md](guidelines/subproject-integration-guide.md) for setup instructions.
 
 ## Guidelines
 Standards and processes for developing on the RatRace2025 platform and MVP backplane.
