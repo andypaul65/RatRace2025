@@ -2,6 +2,17 @@
 
 This document distills project-specific details for the RatRace2025 financial modeling backend, supplementing subproject guidelines. It preserves domain omissions during MVP integration, ensuring isolation-first development before UI extension.
 
+## Important Clarification on Guidelines Usage
+
+The subproject-guidelines (e.g., subproject-coding-standards.md, subproject-testing-guidelines.md, subproject-integration-guide.md, etc.) are for **reference only** and must **not be changed or modified** in this project. These are immutable core standards from the parent MVP backplane framework.
+
+If any modifications, updates, or clarifications are needed to these guidelines:
+- Add RatRace-specific addendums or customizations to this document (`ratrace2025-guidelines.md`)
+- Suggest changes/clarifications to the parent project for consideration in the upstream subproject-guidelines
+- Do not alter the original subproject-guidelines files in this repository
+
+This ensures consistency across subprojects while allowing for project-specific adaptations.
+
 ## Project Naming and Structure
 - **Artifact ID**: `ratrace2025-backend`
 - **Base Package**: `com.finmodel`
