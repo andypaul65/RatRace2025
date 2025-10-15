@@ -1,0 +1,301 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "RatRace2025 MVP Subproject API",
+    "description": "API contracts for RatRace2025 financial modeling subproject within MVP framework",
+    "version": "1.0.0",
+    "contact": {
+      "name": "RatRace2025 Development Team"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Development server"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "MessageDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Message type identifier"
+          },
+          "content": {
+            "type": "string",
+            "description": "Message payload content"
+          },
+          "namespace": {
+            "type": "string",
+            "description": "MVP namespace for message isolation"
+          }
+        },
+        "required": ["type", "content", "namespace"]
+      },
+      "ScenarioData": {
+        "type": "object",
+        "description": "Financial scenario configuration data",
+        "properties": {
+          "entities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Entity"
+            }
+          },
+          "timeline": {
+            "$ref": "#/components/schemas/Timeline"
+          }
+        }
+      },
+      "Entity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "primaryCategory": {
+            "type": "string",
+            "enum": ["Asset", "Liability", "Income", "Expense"]
+          },
+          "balance": {
+            "type": "number",
+            "format": "double"
+          },
+          "rate": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "required": ["id", "name", "primaryCategory"]
+      },
+      "Timeline": {
+        "type": "object",
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "periods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TimePeriod"
+            }
+          }
+        }
+      },
+      "TimePeriod": {
+        "type": "object",
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "riskFreeRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "inflationRate": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "SankeyData": {
+        "type": "object",
+        "description": "Sankey diagram data for flow visualization",
+        "properties": {
+          "nodes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "type": "string"
+                },
+                "target": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "number",
+                  "format": "double"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "error"
+          },
+          "content": {
+            "type": "string",
+            "description": "Error message description"
+          },
+          "namespace": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/mvp/messages": {
+      "post": {
+        "summary": "Send message to RatRace system state service",
+        "description": "Send messages to the RatRace financial modeling service via MVP backplane",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message processed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid message format or processing error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "x-mvp-messages": {
+    "load_scenario": {
+      "description": "Load a financial scenario from JSON configuration",
+      "request": {
+        "type": "load_scenario",
+        "content": {
+          "$ref": "#/components/schemas/ScenarioData"
+        }
+      },
+      "responses": {
+        "load_response": {
+          "type": "load_response",
+          "content": {
+            "type": "string",
+            "example": "Scenario loaded successfully"
+          }
+        },
+        "error": {
+          "$ref": "#/components/schemas/ErrorResponse"
+        }
+      }
+    },
+    "run_simulation": {
+      "description": "Execute the loaded financial simulation",
+      "request": {
+        "type": "run_simulation",
+        "content": {
+          "type": "string",
+          "description": "Empty or configuration parameters"
+        }
+      },
+      "responses": {
+        "simulation_response": {
+          "type": "simulation_response",
+          "content": {
+            "type": "string",
+            "example": "Simulation completed"
+          }
+        },
+        "error": {
+          "$ref": "#/components/schemas/ErrorResponse"
+        }
+      }
+    },
+    "get_dump": {
+      "description": "Generate and return simulation dump output",
+      "request": {
+        "type": "get_dump",
+        "content": {
+          "type": "string",
+          "description": "Empty or dump parameters"
+        }
+      },
+      "responses": {
+        "dump_response": {
+          "type": "dump_response",
+          "content": {
+            "type": "string",
+            "description": "Dump output or success message"
+          }
+        },
+        "error": {
+          "$ref": "#/components/schemas/ErrorResponse"
+        }
+      }
+    },
+    "get_sankey": {
+      "description": "Generate Sankey diagram data for simulation flows",
+      "request": {
+        "type": "get_sankey",
+        "content": {
+          "type": "string",
+          "description": "Empty or visualization parameters"
+        }
+      },
+      "responses": {
+        "sankey_response": {
+          "type": "sankey_response",
+          "content": {
+            "type": "string",
+            "description": "JSON string containing Sankey diagram data"
+          }
+        },
+        "error": {
+          "$ref": "#/components/schemas/ErrorResponse"
+        }
+      }
+    }
+  }
+}
