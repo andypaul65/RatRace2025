@@ -25,7 +25,7 @@ public class RatRaceSystemStateService extends AbstractSystemStateService {
             String type = message.getType();
 
             if ("load_scenario".equals(type)) {
-                // Load scenario from JSON content
+                // TODO: Integrate with FinanceModel.loadFromJson() - ensure proper error handling
                 FinanceModel model = new FinanceModel();
                 model.loadFromJson(content);
                 simulationResults.put(namespace, model);
@@ -37,7 +37,7 @@ public class RatRaceSystemStateService extends AbstractSystemStateService {
                         .build();
 
             } else if ("run_simulation".equals(type)) {
-                // Run simulation for loaded scenario
+                // TODO: Integrate with FinanceModel.runSimulation() - handle simulation exceptions
                 FinanceModel model = simulationResults.get(namespace);
                 if (model == null) {
                     return MessageDto.builder()
@@ -56,7 +56,7 @@ public class RatRaceSystemStateService extends AbstractSystemStateService {
                         .build();
 
             } else if ("get_dump".equals(type)) {
-                // Get console dump
+                // TODO: Integrate with FinanceModel.dumpToConsole() - capture output properly
                 FinanceModel model = simulationResults.get(namespace);
                 if (model == null) {
                     return MessageDto.builder()
@@ -76,7 +76,7 @@ public class RatRaceSystemStateService extends AbstractSystemStateService {
                         .build();
 
             } else if ("get_sankey".equals(type)) {
-                // Get Sankey data
+                // TODO: Integrate with FinanceModel.buildSankeyData() - ensure data format matches MVP expectations
                 FinanceModel model = simulationResults.get(namespace);
                 if (model == null) {
                     return MessageDto.builder()
@@ -124,8 +124,8 @@ public class RatRaceSystemStateService extends AbstractSystemStateService {
 
     @Override
     protected void storeMessage(String namespace, MessageDto message) {
-        // Store message for audit purposes
-        // In MVP framework, this would integrate with persistence layer
+        // TODO: Integrate with existing persistence layer or AuditLog for message storage
+        // Currently using AuditLog as placeholder - may need database integration
         AuditLog.getInstance().log("MVP Message: " + namespace + " - " + message.getType() + " - " + message.getContent());
     }
 }

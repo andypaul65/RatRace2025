@@ -21,7 +21,8 @@ public class MvpConfiguration {
 
     @PostConstruct
     public void registerServices() {
-        // Register the RatRace system state service
+        // TODO: Register additional services as needed (e.g., custom tabs, controllers)
+        // TODO: Ensure service namespace "ratrace" aligns with MVP conventions
         serviceRegistry.registerService("ratrace", ratRaceSystemStateService);
 
         // Log registration for debugging
