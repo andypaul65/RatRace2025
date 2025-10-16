@@ -30,8 +30,8 @@ rectangle "MVP Backplane" as MVP {
 }
 
 rectangle "RatRace2025 Subproject" as RR {
-    rectangle "RatRaceSystemStateService" as RSS
-    rectangle "MvpConfiguration" as MC
+    rectangle "FinanceModel" as FM
+    rectangle "Simulator" as SIM
     rectangle "Domain Layer" as DL
 }
 
@@ -43,8 +43,7 @@ rectangle "Client Application" as Client {
 Client --> MVP : WebSocket/Message API
 MVP --> RR : Service Calls
 RR --> DL : Domain Operations
-RSS --> SR : Registration
-MC --> SR : Configuration
+FM --> SR : Registration
 
 note right of MVP
     Centralized message routing
@@ -111,11 +110,11 @@ The MVP backplane provides the communication layer between client and server, en
 skinparam backgroundColor #FEFEFE
 skinparam packageStyle rect
 
-package "com.finmodel" {
-  package "mvp" as MVP {
-    class RatRaceSystemStateService
-    class MvpConfiguration
-    class MessageDto
+  package "com.finmodel" {
+  package "service" as Service {
+    class FinanceModel
+    class Simulator
+    class EventProcessor
   }
 
   package "domain" as Domain {
@@ -154,7 +153,7 @@ ClientSrc --> MVP : communicates via
 @enduml
 ```
 
-The MVP integration layer (`RatRaceSystemStateService`, `MvpConfiguration`) bridges the MVP backplane with the existing domain logic, while the client layer provides the user interface through standardized MVP components.
+The service layer (`FinanceModel`, `Simulator`, `EventProcessor`) implements the core financial modeling logic, while the client layer provides the user interface through standardized MVP components.
 
 ## Domain Layer Deep Dive
 
