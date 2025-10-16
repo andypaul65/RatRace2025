@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useMvpClient } from '@ajp/mvp-client';
+import { useMvpClient } from '../stubs/mvp-client';
 
 interface RatRaceFinanceTabProps {
   namespace: string;

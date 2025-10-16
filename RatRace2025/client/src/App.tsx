@@ -1,9 +1,9 @@
-import React from 'react';
-import { TabbedInterface, TabConfig } from '@ajp/mvp-client';
+import { TabbedInterface } from './stubs/mvp-client';
+import type { TabConfig } from './stubs/mvp-client';
 import RatRaceFinanceTab from './components/RatRaceFinanceTab';
 
 const financeTab: TabConfig = {
-  namespace: 'ratrace-finance',
+  namespace: 'ratrace',
   title: 'Financial Modeling',
   component: RatRaceFinanceTab,
 };

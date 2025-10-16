@@ -9,13 +9,20 @@
     </parent>
     <groupId>com.finmodel</groupId>
     <artifactId>ratrace2025-backend</artifactId>
-    <version>1.0.0</version>
+    <version>0.0.1-SNAPSHOT</version>
     <repositories>
         <repository>
             <id>github</id>
             <url>https://maven.pkg.github.com/andypaul65/MVP</url>
         </repository>
     </repositories>
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/andypaul65/MVP</url>
+        </repository>
+    </distributionManagement>
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -54,11 +61,13 @@
             <artifactId>guava</artifactId>
             <version>32.1.3-jre</version>
         </dependency>
+        <!-- TODO: Uncomment when MVP server JAR is published
         <dependency>
             <groupId>org.ajp.mvp</groupId>
             <artifactId>server</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+        -->
         <dependency>
             <groupId>io.cucumber</groupId>
             <artifactId>cucumber-java</artifactId>
