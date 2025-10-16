@@ -11,7 +11,7 @@ This document outlines the coding standards and best practices for subprojects b
 To establish a robust foundation for a subproject, scaffold the project (e.g., via `npm init vite@latest` for a React + TypeScript setup) and integrate the MVP backplane as per the `subproject-integration-guide.md`.
 
 - **Core Dependencies**: Install and verify the following in `package.json`:
-  - Runtime: `react`, `react-dom`, `@ajp/mvp-client`.
+  - Runtime: `react`, `react-dom`, `@nednederlander/mvp-client`.
   - Development: `@types/react`, `@types/react-dom`, `@vitejs/plugin-react`.
   - TypeScript: `typescript`.
 - **Server Dependencies**: In `pom.xml`, include the MVP server JAR and configure GitHub Packages repository.

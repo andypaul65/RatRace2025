@@ -25,7 +25,7 @@ Extensions are achieved through:
   - Not used when building on top of the base layer.
 
 ### Client NPM Naming
-- **Package**: `@ajp/mvp-client@0.0.1`
+- **Package**: `@nednederlander/mvp-client@0.0.1`
 - **Dist Files**:
   - `dist/index.js`: ESM bundle (externalizes React/React-DOM).
   - `dist/index.d.ts`: TypeScript definitions.
@@ -44,7 +44,7 @@ To enable publishing the client library to NPM:
 2. **Update package.json** for publishing:
    ```json
    {
-     "name": "@ajp/mvp-client",
+     "name": "@nednederlander/mvp-client",
      "version": "0.0.1",
      "publishConfig": {
        "access": "public"
@@ -174,7 +174,7 @@ interface TabConfig {
 
 ### Adding a Custom Tab (Client)
 ```typescript
-import { TabConfig, TabbedInterface } from '@ajp/mvp-client';
+import { TabConfig, TabbedInterface } from '@nednederlander/mvp-client';
 import React from 'react';
 
 const customTab: TabConfig = {
@@ -214,7 +214,7 @@ public class CustomSystemStateService extends AbstractSystemStateService {
 ### Registry Usage
 ```typescript
 // Client: Register tab dynamically
-import { TabRegistry } from '@ajp/mvp-client';
+import { TabRegistry } from '@nednederlander/mvp-client';
 const registry: TabRegistry = /* implementation */;
 registry.registerTab(customTab);
 
@@ -237,7 +237,7 @@ registry.registerService("customState", new CustomSystemStateService());
 
 ### NPM Project Setup
 ```bash
-npm install @ajp/mvp-client react react-dom
+npm install @nednederlander/mvp-client react react-dom
 ```
 
 ### Repository Configuration for Subprojects
@@ -258,7 +258,7 @@ To use the published JAR from GitHub Packages in a subproject:
 2. **Update dependency version** to the released version (e.g., `0.0.1` instead of `0.0.1-SNAPSHOT`).
 
 #### NPM Package Usage
-The `@ajp/mvp-client` package is published to NPM registry. Subprojects can install it directly via `npm install @ajp/mvp-client`. No additional repository setup needed for public packages.
+The `@nednederlander/mvp-client` package is published to NPM registry. Subprojects can install it directly via `npm install @nednederlander/mvp-client`. No additional repository setup needed for public packages.
 
 ### Project Structure Example
 ```
@@ -269,7 +269,7 @@ my-extension/
 │       ├── MyController.java
 │       └── services/MyService.java (extends AbstractSystemStateService)
 ├── client/
-│   ├── package.json (includes @ajp/mvp-client)
+│   ├── package.json (includes @nednederlander/mvp-client)
 │   └── src/
 │       ├── App.tsx (uses TabbedInterface)
 │       └── components/MyTab.tsx
@@ -308,7 +308,7 @@ To maintain a reliable ecosystem:
 
 ## API Reference
 - Server Endpoints: See `api-contracts.json`
-- Client Components: Exported from `@ajp/mvp-client`
+- Client Components: Exported from `@nednederlander/mvp-client`
 - DTOs: Shared between client/server for consistency.
 
 This guide ensures consistent expansion. Refer to it for integrating new features.

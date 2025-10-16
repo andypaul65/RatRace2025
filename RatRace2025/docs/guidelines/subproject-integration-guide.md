@@ -106,7 +106,7 @@ Update `package.json` for the library build:
     "dev": "vite"
   },
   "dependencies": {
-    "@ajp/mvp-client": "^0.0.1",
+    "@nednederlander/mvp-client": "^0.0.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
@@ -168,6 +168,7 @@ Pin to stable versions for production (e.g., `0.0.1`). Use version ranges for de
 - **Dependency Resolution**: Run `mvn clean` if JAR issues occur.
 - **Build Errors**: Check TypeScript and Java versions match requirements.
 - **Namespace Conflicts**: Use unique namespaces for extensions.
+- **NPM Package Installation**: If `npm install @nednederlander/mvp-client` fails, ensure your registry is set to `https://registry.npmjs.org/` (run `npm config set registry https://registry.npmjs.org/` if needed), clear cache with `npm cache clean --force`, and verify the package exists at https://www.npmjs.com/package/@nednederlander/mvp-client. For public scoped packages, no authentication is required.
 
 ## Next Steps
 

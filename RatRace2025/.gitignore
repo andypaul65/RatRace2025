@@ -37,6 +37,24 @@ build/
 ### Mac OS ###
 .DS_Store
 
+### Node.js ###
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+### Build outputs ###
+dist/
+build/
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+
+### Development stubs (replaced by published packages) ###
+**/src/stubs/
+
 ### Old lib directory (replaced by Maven dependencies) ###
 lib/
 
