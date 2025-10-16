@@ -1,12 +1,36 @@
 import React, { useState } from 'react';
-import { useMvpClient } from '../stubs/mvp-client';
 
 interface RatRaceFinanceTabProps {
   namespace: string;
 }
 
 const RatRaceFinanceTab: React.FC<RatRaceFinanceTabProps> = ({ namespace }) => {
-  const { sendMessage, isConnected } = useMvpClient();
+  // Direct API calls to backend (using Vite proxy)
+  const sendMessage = async (message: any) => {
+    const response = await fetch(`/api/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        namespace,
+        type: message.type,
+        content: message.content
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return {
+      type: data.type || 'response',
+      content: data.content || data
+    };
+  };
+
+  const [isConnected, setIsConnected] = useState(true); // Assume connected for direct calls
   const [scenarioJson, setScenarioJson] = useState('');
   const [status, setStatus] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
@@ -21,7 +45,7 @@ const RatRaceFinanceTab: React.FC<RatRaceFinanceTabProps> = ({ namespace }) => {
     setStatus('Loading scenario...');
 
     try {
-      const response = await sendMessage(namespace, {
+      const response = await sendMessage({
         type: 'load_scenario',
         content: scenarioJson
       });
@@ -29,10 +53,10 @@ const RatRaceFinanceTab: React.FC<RatRaceFinanceTabProps> = ({ namespace }) => {
       if (response.type === 'load_response') {
         setStatus('Scenario loaded successfully');
       } else {
-        setStatus(`Error: ${response.content}`);
+        setStatus(`Error: ${typeof response.content === 'string' ? response.content : JSON.stringify(response.content, null, 2)}`);
       }
     } catch (error) {
-      setStatus(`Failed to load scenario: ${error}`);
+      setStatus(`Failed to load scenario: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsLoading(false);
     }
@@ -43,7 +67,7 @@ const RatRaceFinanceTab: React.FC<RatRaceFinanceTabProps> = ({ namespace }) => {
     setStatus('Running simulation...');
 
     try {
-      const response = await sendMessage(namespace, {
+      const response = await sendMessage({
         type: 'run_simulation',
         content: ''
       });
@@ -51,10 +75,10 @@ const RatRaceFinanceTab: React.FC<RatRaceFinanceTabProps> = ({ namespace }) => {
       if (response.type === 'simulation_response') {
         setStatus('Simulation completed successfully');
       } else {
-        setStatus(`Error: ${response.content}`);
+        setStatus(`Error: ${typeof response.content === 'string' ? response.content : JSON.stringify(response.content, null, 2)}`);
       }
     } catch (error) {
-      setStatus(`Failed to run simulation: ${error}`);
+      setStatus(`Failed to run simulation: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsLoading(false);
     }
@@ -65,18 +89,18 @@ const RatRaceFinanceTab: React.FC<RatRaceFinanceTabProps> = ({ namespace }) => {
     setStatus('Generating dump...');
 
     try {
-      const response = await sendMessage(namespace, {
+      const response = await sendMessage({
         type: 'get_dump',
         content: ''
       });
 
       if (response.type === 'dump_response') {
-        setStatus(response.content);
+        setStatus(typeof response.content === 'string' ? response.content : JSON.stringify(response.content, null, 2));
       } else {
         setStatus(`Error: ${response.content}`);
       }
     } catch (error) {
-      setStatus(`Failed to get dump: ${error}`);
+      setStatus(`Failed to get dump: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsLoading(false);
     }
@@ -87,7 +111,7 @@ const RatRaceFinanceTab: React.FC<RatRaceFinanceTabProps> = ({ namespace }) => {
     setStatus('Generating Sankey data...');
 
     try {
-      const response = await sendMessage(namespace, {
+      const response = await sendMessage({
         type: 'get_sankey',
         content: ''
       });
@@ -96,10 +120,10 @@ const RatRaceFinanceTab: React.FC<RatRaceFinanceTabProps> = ({ namespace }) => {
         setStatus('Sankey data generated - check console for JSON');
         console.log('Sankey Data:', JSON.parse(response.content));
       } else {
-        setStatus(`Error: ${response.content}`);
+        setStatus(`Error: ${typeof response.content === 'string' ? response.content : JSON.stringify(response.content, null, 2)}`);
       }
     } catch (error) {
-      setStatus(`Failed to get Sankey data: ${error}`);
+      setStatus(`Failed to get Sankey data: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsLoading(false);
     }

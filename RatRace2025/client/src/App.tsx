@@ -1,16 +1,13 @@
-import { TabbedInterface } from './stubs/mvp-client';
-import type { TabConfig } from './stubs/mvp-client';
+import React from 'react';
 import RatRaceFinanceTab from './components/RatRaceFinanceTab';
 
-const financeTab: TabConfig = {
-  namespace: 'ratrace',
-  title: 'Financial Modeling',
-  component: RatRaceFinanceTab,
-};
-
 function App() {
-  const tabs = [financeTab]; // Add more tabs as needed
-  return <TabbedInterface tabs={tabs} />;
+  return (
+    <div style={{ fontFamily: 'Arial, sans-serif' }}>
+      <h1>RatRace2025 Financial Modeling Platform</h1>
+      <RatRaceFinanceTab namespace="ratrace" />
+    </div>
+  );
 }
 
 export default App;

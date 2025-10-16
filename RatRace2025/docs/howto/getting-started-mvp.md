@@ -76,12 +76,30 @@ The RatRace backend is a Spring Boot application that integrates with the MVP ba
 # Navigate to project root
 cd /path/to/ratrace2025
 
-# Start the Spring Boot server
+# Start the Spring Boot server (default port 8080)
 mvn spring-boot:run
 ```
 
+**Spring Boot Port Configuration:**
+Spring Boot supports flexible port configuration:
+
+- **Default Port**: 8080
+- **Custom Port via Command Line**:
+  ```bash
+  mvn spring-boot:run -Dspring-boot.run.arguments="--server.port=3000"
+  ```
+- **Custom Port via Environment Variable**:
+  ```bash
+  SERVER_PORT=3000 mvn spring-boot:run
+  ```
+- **Custom Port via application.properties**:
+  Create `src/main/resources/application.properties` with:
+  ```
+  server.port=3000
+  ```
+
 **What happens:**
-- Server starts on `http://localhost:8080`
+- Server starts on `http://localhost:8080` (or configured port)
 - MVP services are registered in the `ratrace` namespace
 - WebSocket endpoint available at `/ws` for real-time updates
 - REST API endpoints available under `/mvp/messages`
@@ -100,7 +118,7 @@ npm run dev
 ```
 
 **What happens:**
-- Client starts on `http://localhost:5173` (or next available port)
+- Client starts on `http://localhost:3000` (or next available port)
 - Connects to server via WebSocket for real-time communication
 - Loads the published `@nednederlander/mvp-client` library and initializes tabbed interface
 - Dependencies are locked for reproducible builds

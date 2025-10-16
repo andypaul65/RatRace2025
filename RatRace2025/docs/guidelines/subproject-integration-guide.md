@@ -83,7 +83,30 @@ public class MyCustomService extends AbstractSystemStateService {
 }
 ```
 
-Register services via `ServiceRegistry` in your configuration.
+Register services via `ServiceRegistry` in your configuration. The `ServiceRegistry` is available as a Spring bean for injection:
+
+```java
+import org.ajp.mvp.server.ServiceRegistry;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import javax.annotation.PostConstruct;
+
+@Component
+public class MyServiceRegistrar {
+
+    @Autowired
+    private ServiceRegistry registry;
+
+    @Autowired
+    private MyCustomService myCustomService; // Assuming MyCustomService is a @Service
+
+    @PostConstruct
+    public void registerServices() {
+        // Register custom services after bean initialization
+        registry.registerService("myService", myCustomService);
+    }
+}
+```
 
 ## Step 2: Set Up Client-Side Integration
 
@@ -169,6 +192,7 @@ Pin to stable versions for production (e.g., `0.0.1`). Use version ranges for de
 - **Build Errors**: Check TypeScript and Java versions match requirements.
 - **Namespace Conflicts**: Use unique namespaces for extensions.
 - **NPM Package Installation**: If `npm install @nednederlander/mvp-client` fails, ensure your registry is set to `https://registry.npmjs.org/` (run `npm config set registry https://registry.npmjs.org/` if needed), clear cache with `npm cache clean --force`, and verify the package exists at https://www.npmjs.com/package/@nednederlander/mvp-client. For public scoped packages, no authentication is required.
+- **Spring Boot Startup**: If Spring Boot fails to start, check for Maven dependency resolution (`mvn dependency:resolve`), ensure the MVP server JAR is correctly pulled from GitHub Packages (verify PAT and repository configuration), and inspect logs for bean creation errors or classpath issues. Confirm that custom services extending `AbstractSystemStateService` are properly annotated with `@Service`.
 
 ## Next Steps
 
