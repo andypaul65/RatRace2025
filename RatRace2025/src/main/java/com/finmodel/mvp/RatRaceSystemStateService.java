@@ -1,8 +1,8 @@
 package com.finmodel.mvp;
 
 import org.springframework.stereotype.Service;
-import org.ajp.mvp.server.AbstractSystemStateService;
-import org.ajp.mvp.server.MessageDto;
+import com.example.services.AbstractSystemStateService;
+import com.example.dto.MessageDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finmodel.FinanceModel;
 import com.finmodel.SimulationException;
@@ -25,89 +25,75 @@ public class RatRaceSystemStateService extends AbstractSystemStateService {
     public MessageDto processMessage(String namespace, MessageDto message) {
         try {
             String content = message.getContent();
-            String type = message.getType();
+
+            // Parse message type from content (assuming JSON format with "type" field)
+            String type = "unknown";
+            try {
+                // Simple JSON parsing to extract type
+                if (content.contains("\"type\"")) {
+                    int typeStart = content.indexOf("\"type\"") + 8;
+                    int typeEnd = content.indexOf("\"", typeStart);
+                    if (typeEnd > typeStart) {
+                        type = content.substring(typeStart, typeEnd);
+                    }
+                }
+            } catch (Exception e) {
+                // If parsing fails, treat as unknown type
+                type = "unknown";
+            }
 
             if ("load_scenario".equals(type)) {
                 try {
+                    // Extract actual scenario data from content
+                    String scenarioData = content;
+                    if (content.contains("\"data\"")) {
+                        int dataStart = content.indexOf("\"data\"") + 8;
+                        int dataEnd = content.lastIndexOf("}");
+                        if (dataEnd > dataStart) {
+                            scenarioData = content.substring(dataStart, dataEnd);
+                        }
+                    }
+
                     FinanceModel model = new FinanceModel();
-                    model.loadFromJson(content);
+                    model.loadFromJson(scenarioData);
                     simulationResults.put(namespace, model);
 
-                    return MessageDto.builder()
-                            .content("Scenario loaded successfully")
-                            .namespace(namespace)
-                            .type("load_response")
-                            .build();
+                    return new MessageDto("Scenario loaded successfully", namespace);
                 } catch (Exception e) {
-                    return MessageDto.builder()
-                            .content("Failed to load scenario: " + e.getMessage())
-                            .namespace(namespace)
-                            .type("error")
-                            .build();
+                    return new MessageDto("Failed to load scenario: " + e.getMessage(), namespace);
                 }
 
             } else if ("run_simulation".equals(type)) {
                 FinanceModel model = simulationResults.get(namespace);
                 if (model == null) {
-                    return MessageDto.builder()
-                            .content("No scenario loaded for namespace: " + namespace)
-                            .namespace(namespace)
-                            .type("error")
-                            .build();
+                    return new MessageDto("No scenario loaded for namespace: " + namespace, namespace);
                 }
 
                 try {
                     model.runSimulation();
-
-                    return MessageDto.builder()
-                            .content("Simulation completed")
-                            .namespace(namespace)
-                            .type("simulation_response")
-                            .build();
+                    return new MessageDto("Simulation completed", namespace);
                 } catch (SimulationException e) {
-                    return MessageDto.builder()
-                            .content("Simulation failed: " + e.getMessage())
-                            .namespace(namespace)
-                            .type("error")
-                            .build();
+                    return new MessageDto("Simulation failed: " + e.getMessage(), namespace);
                 }
 
             } else if ("get_dump".equals(type)) {
                 FinanceModel model = simulationResults.get(namespace);
                 if (model == null) {
-                    return MessageDto.builder()
-                            .content("No simulation results for namespace: " + namespace)
-                            .namespace(namespace)
-                            .type("error")
-                            .build();
+                    return new MessageDto("No simulation results for namespace: " + namespace, namespace);
                 }
 
                 try {
                     // TODO: Implement proper output capture instead of console printing
-                    // For now, print to console as per existing behavior, but return summary
                     model.dumpToConsole();
-
-                    return MessageDto.builder()
-                            .content("Simulation dump printed to console - see server logs for details")
-                            .namespace(namespace)
-                            .type("dump_response")
-                            .build();
+                    return new MessageDto("Simulation dump printed to console - see server logs for details", namespace);
                 } catch (Exception e) {
-                    return MessageDto.builder()
-                            .content("Failed to generate dump: " + e.getMessage())
-                            .namespace(namespace)
-                            .type("error")
-                            .build();
+                    return new MessageDto("Failed to generate dump: " + e.getMessage(), namespace);
                 }
 
             } else if ("get_sankey".equals(type)) {
                 FinanceModel model = simulationResults.get(namespace);
                 if (model == null) {
-                    return MessageDto.builder()
-                            .content("No simulation results for namespace: " + namespace)
-                            .namespace(namespace)
-                            .type("error")
-                            .build();
+                    return new MessageDto("No simulation results for namespace: " + namespace, namespace);
                 }
 
                 try {
@@ -115,48 +101,28 @@ public class RatRaceSystemStateService extends AbstractSystemStateService {
                     ObjectMapper mapper = new ObjectMapper();
                     String jsonData = mapper.writeValueAsString(sankeyData);
 
-                    return MessageDto.builder()
-                            .content(jsonData)
-                            .namespace(namespace)
-                            .type("sankey_response")
-                            .build();
+                    return new MessageDto(jsonData, namespace);
                 } catch (Exception e) {
-                    return MessageDto.builder()
-                            .content("Failed to generate Sankey data: " + e.getMessage())
-                            .namespace(namespace)
-                            .type("error")
-                            .build();
+                    return new MessageDto("Failed to generate Sankey data: " + e.getMessage(), namespace);
                 }
             }
 
-            return MessageDto.builder()
-                    .content("Unknown message type: " + type)
-                    .namespace(namespace)
-                    .type("error")
-                    .build();
+            return new MessageDto("Unknown message type: " + type, namespace);
 
         } catch (Exception e) {
-            return MessageDto.builder()
-                    .content("Error processing message: " + e.getMessage())
-                    .namespace(namespace)
-                    .type("error")
-                    .build();
+            return new MessageDto("Error processing message: " + e.getMessage(), namespace);
         }
     }
 
     @Override
     public MessageDto getDefaultState(String namespace) {
-        return MessageDto.builder()
-                .content("No scenario loaded")
-                .namespace(namespace)
-                .type("default_state")
-                .build();
+        return new MessageDto("No scenario loaded", namespace);
     }
 
     @Override
     protected void storeMessage(String namespace, MessageDto message) {
         // TODO: Integrate with existing persistence layer or AuditLog for message storage
         // Currently using AuditLog as placeholder - may need database integration
-        AuditLog.getInstance().log("MVP Message: " + namespace + " - " + message.getType() + " - " + message.getContent());
+        AuditLog.getInstance().log("MVP Message: " + namespace + " - " + message.getContent());
     }
 }
