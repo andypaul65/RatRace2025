@@ -190,7 +190,7 @@ To ensure safe and reliable command execution, follow these guardrails:
 - **Diagnostic Tools**: Use logs, debug output, and code inspection for failure diagnosis. For npm commands, inspect npm logs via `npm run <command> --verbose`.
 
 ### Command Restrictions
-- **Server Startup**: Use `npm run dev` for local development server, but note potential port conflicts; request manual server startup in separate console/IDE if needed.
+- **Server Startup**: Use `npm run dev` for local development server in a separate terminal, but note potential port conflicts; do not run in chat.
 - **Purpose**: Prevents port conflicts and enables independent server management
 
 ## Design Document Maintenance (MANDATORY)
@@ -225,7 +225,7 @@ Incorporate checks at milestones to catch issues proactively.
 - **Periodic Build Review**: Run `npm run build` after configuration changes, before commits, and at each incremental stage end. Inspect for TypeScript errors (e.g., TS6133, TS1484) and resolve all.
 - **Development Workflow**:
   1. `npm install` for dependencies.
-  2. `npm run dev` for hot reloading.
+  2. `npm run dev` for hot reloading (run in separate terminal, do not run in chat).
   3. `npm test` for unit/integration tests (using Jest/Vitest).
   4. BDD if applicable (e.g., Cypress for E2E): `npm run cypress:run`.
   5. Browser console checks for runtime errors.

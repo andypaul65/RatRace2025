@@ -157,7 +157,7 @@ The framework uses OpenAPI contracts in `api-contracts.json`. Ensure your subpro
 
 ### Building and Running
 - **Server**: `mvn clean install` then `mvn spring-boot:run`.
-- **Client**: `npm run build` then `npm run dev`.
+- **Client**: `npm run build` then run `npm run dev` in a separate terminal (do not run in chat).
 
 ### Versioning
 Pin to stable versions for production (e.g., `0.0.1`). Use version ranges for development (e.g., `^0.0.1`).
