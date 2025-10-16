@@ -1,0 +1,79 @@
+ Phase 1: Package Structure and Server-Side Fixes
+
+  1.1 Fix Package Structure
+  • Move RatRaceSystemStateService.java and MvpConfiguration.java from com.finmodel to com.finmodel.mvp package
+  • Update package declarations and import statements
+  • This aligns with the guide's expectation of MVP-related classes in a dedicated package
+
+  1.2 Add Distribution Management
+  • Add <distributionManagement> section to pom.xml for publishing to GitHub Packages
+  • Include repository configuration matching the guide's requirements
+
+  1.3 Fix Version Numbers
+  • Update pom.xml version from 1.0.0 to 0.0.1-SNAPSHOT
+  • Update client/package.json version to 0.0.1-SNAPSHOT
+  • This matches the guide's versioning requirements
+
+
+  Phase 2: Client-Side Build Configuration
+
+  2.1 Update Client Dependencies and Scripts
+  • Update client/package.json with proper dependency versions per coding standards
+  • Add missing dev dependencies (@types/node, proper Vite version)
+  • Update build scripts to match standards (build, dev, proper test scripts)
+
+  2.2 Implement Composite TypeScript Configuration
+  • Create tsconfig.app.json and tsconfig.node.json as per coding standards
+  • Implement proper composite project structure
+  • Add path aliases (@/* for src directory)
+  • Configure strict TypeScript settings
+
+  2.3 Update Vite Configuration
+  • Add proper path resolution and aliases to vite.config.ts
+  • Ensure compatibility with the composite TypeScript setup
+  • Configure for library mode if needed for publishing
+
+
+  Phase 3: Namespace and Communication Fixes
+
+  3.1 Fix Namespace Consistency
+  • Align client namespace (ratrace-finance) with server registration (ratrace)
+  • Either change client to use ratrace or update server registration to match
+  • Ensure consistent namespace usage across the application
+
+  3.2 Verify MVP Message Contracts
+  • Confirm that the message types (load_scenario, run_simulation, etc.) match the API contracts defined in
+    api-contracts.json
+  • Ensure proper error handling and response formats
+
+
+  Phase 4: Testing and Validation
+
+  4.1 Add Integration Tests
+  • Create tests to verify MVP integration works correctly
+  • Test message passing between client and server
+  • Validate namespace isolation
+
+  4.2 Verify Build and Deployment
+  • Ensure Maven can build and publish to GitHub Packages
+  • Verify NPM package can be built and published
+  • Test end-to-end MVP communication
+
+
+  Implementation Priority
+
+  1. High Priority: Package structure and server-side fixes (Phase 1) - These are core integration issues
+  2. High Priority: Client build configuration (Phase 2) - Required for proper development workflow
+  3. Medium Priority: Namespace consistency (Phase 3) - Affects communication
+  4. Low Priority: Testing and validation (Phase 4) - Should be done after fixes
+
+
+  Expected Outcome
+
+  After implementing this plan, the project will be fully consistent with:
+  • ✅ subproject-integration-guide.md requirements
+  • ✅ subproject-coding-standards.md guidelines
+  • ✅ subproject-architecture.md principles
+  • ✅ Proper MVP backplane integration
+
+  The project will then be ready for proper development, testing, and deployment within the MVP framework ecosystem.
