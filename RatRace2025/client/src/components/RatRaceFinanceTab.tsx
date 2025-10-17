@@ -25,10 +25,15 @@ const RatRaceFinanceTab: React.FC<RatRaceFinanceTabProps> = ({ namespace }: RatR
         content: scenarioJson
       });
 
-      if (response.type === 'load_response') {
+      // Parse the JSON response content
+      const responseData = JSON.parse(response.content);
+
+      if (responseData.type === 'load_response') {
         setStatus('Scenario loaded successfully');
+      } else if (responseData.type === 'error') {
+        setStatus(`Error: ${responseData.content}`);
       } else {
-        setStatus(`Error: ${typeof response.content === 'string' ? response.content : JSON.stringify(response.content, null, 2)}`);
+        setStatus(`Unexpected response: ${responseData.content}`);
       }
     } catch (error) {
       setStatus(`Failed to load scenario: ${error instanceof Error ? error.message : String(error)}`);
@@ -44,10 +49,15 @@ const RatRaceFinanceTab: React.FC<RatRaceFinanceTabProps> = ({ namespace }: RatR
         content: ''
       });
 
-      if (response.type === 'simulation_response') {
+      // Parse the JSON response content
+      const responseData = JSON.parse(response.content);
+
+      if (responseData.type === 'simulation_response') {
         setStatus('Simulation completed successfully');
+      } else if (responseData.type === 'error') {
+        setStatus(`Error: ${responseData.content}`);
       } else {
-        setStatus(`Error: ${typeof response.content === 'string' ? response.content : JSON.stringify(response.content, null, 2)}`);
+        setStatus(`Unexpected response: ${responseData.content}`);
       }
     } catch (error) {
       setStatus(`Failed to run simulation: ${error instanceof Error ? error.message : String(error)}`);
@@ -63,10 +73,15 @@ const RatRaceFinanceTab: React.FC<RatRaceFinanceTabProps> = ({ namespace }: RatR
         content: ''
       });
 
-      if (response.type === 'dump_response') {
-        setStatus(typeof response.content === 'string' ? response.content : JSON.stringify(response.content, null, 2));
+      // Parse the JSON response content
+      const responseData = JSON.parse(response.content);
+
+      if (responseData.type === 'dump_response') {
+        setStatus(responseData.content);
+      } else if (responseData.type === 'error') {
+        setStatus(`Error: ${responseData.content}`);
       } else {
-        setStatus(`Error: ${response.content}`);
+        setStatus(`Unexpected response: ${responseData.content}`);
       }
     } catch (error) {
       setStatus(`Failed to get dump: ${error instanceof Error ? error.message : String(error)}`);
@@ -82,11 +97,16 @@ const RatRaceFinanceTab: React.FC<RatRaceFinanceTabProps> = ({ namespace }: RatR
         content: ''
       });
 
-      if (response.type === 'sankey_response') {
+      // Parse the JSON response content
+      const responseData = JSON.parse(response.content);
+
+      if (responseData.type === 'sankey_response') {
         setStatus('Sankey data generated - check console for JSON');
-        console.log('Sankey Data:', JSON.parse(response.content));
+        console.log('Sankey Data:', JSON.parse(responseData.content));
+      } else if (responseData.type === 'error') {
+        setStatus(`Error: ${responseData.content}`);
       } else {
-        setStatus(`Error: ${typeof response.content === 'string' ? response.content : JSON.stringify(response.content, null, 2)}`);
+        setStatus(`Unexpected response: ${responseData.content}`);
       }
     } catch (error) {
       setStatus(`Failed to get Sankey data: ${error instanceof Error ? error.message : String(error)}`);
