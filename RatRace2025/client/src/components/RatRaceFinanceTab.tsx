@@ -1,39 +1,15 @@
 import React, { useState } from 'react';
+import { useSystemState } from '@nednederlander/mvp-client';
 
 interface RatRaceFinanceTabProps {
   namespace: string;
 }
 
-const RatRaceFinanceTab: React.FC<RatRaceFinanceTabProps> = ({ namespace }) => {
-  // Direct API calls to backend (using Vite proxy)
-  const sendMessage = async (message: any) => {
-    const response = await fetch(`/api/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        namespace,
-        type: message.type,
-        content: message.content
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return {
-      type: data.type || 'response',
-      content: data.content || data
-    };
-  };
-
-  const [isConnected, setIsConnected] = useState(true); // Assume connected for direct calls
+const RatRaceFinanceTab: React.FC<RatRaceFinanceTabProps> = ({ namespace }: RatRaceFinanceTabProps) => {
+  const { sendMessage, loading: isLoading, error: connectionError } = useSystemState(namespace);
+  const isConnected = !connectionError;
   const [scenarioJson, setScenarioJson] = useState('');
   const [status, setStatus] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
 
   const loadScenario = async () => {
     if (!scenarioJson.trim()) {
@@ -41,7 +17,6 @@ const RatRaceFinanceTab: React.FC<RatRaceFinanceTabProps> = ({ namespace }) => {
       return;
     }
 
-    setIsLoading(true);
     setStatus('Loading scenario...');
 
     try {
@@ -57,13 +32,10 @@ const RatRaceFinanceTab: React.FC<RatRaceFinanceTabProps> = ({ namespace }) => {
       }
     } catch (error) {
       setStatus(`Failed to load scenario: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const runSimulation = async () => {
-    setIsLoading(true);
     setStatus('Running simulation...');
 
     try {
@@ -79,13 +51,10 @@ const RatRaceFinanceTab: React.FC<RatRaceFinanceTabProps> = ({ namespace }) => {
       }
     } catch (error) {
       setStatus(`Failed to run simulation: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const getDump = async () => {
-    setIsLoading(true);
     setStatus('Generating dump...');
 
     try {
@@ -101,13 +70,10 @@ const RatRaceFinanceTab: React.FC<RatRaceFinanceTabProps> = ({ namespace }) => {
       }
     } catch (error) {
       setStatus(`Failed to get dump: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const getSankey = async () => {
-    setIsLoading(true);
     setStatus('Generating Sankey data...');
 
     try {
@@ -124,8 +90,6 @@ const RatRaceFinanceTab: React.FC<RatRaceFinanceTabProps> = ({ namespace }) => {
       }
     } catch (error) {
       setStatus(`Failed to get Sankey data: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -134,14 +98,14 @@ const RatRaceFinanceTab: React.FC<RatRaceFinanceTabProps> = ({ namespace }) => {
       <h2>RatRace2025 Financial Modeling</h2>
 
       <div style={{ marginBottom: '20px' }}>
-        <strong>Connection Status:</strong> {isConnected ? 'Connected' : 'Disconnected'}
+        <strong>Connection Status:</strong> {isConnected ? 'Connected' : `Disconnected (${connectionError})`}
       </div>
 
       <div style={{ marginBottom: '20px' }}>
         <h3>Load Scenario</h3>
         <textarea
           value={scenarioJson}
-          onChange={(e) => setScenarioJson(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setScenarioJson(e.target.value)}
           placeholder="Paste scenario JSON here..."
           rows={10}
           cols={80}

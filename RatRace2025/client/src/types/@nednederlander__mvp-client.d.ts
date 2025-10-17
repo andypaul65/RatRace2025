@@ -1,40 +1,26 @@
-// Type declarations for @nednederlander/mvp-client
-// This file provides TypeScript definitions for the MVP client package
-
 declare module '@nednederlander/mvp-client' {
-  export interface MessageDto {
-    type: string;
-    content: string;
-    namespace: string;
-  }
-
   export interface TabConfig {
     namespace: string;
     title: string;
-    component: React.ComponentType<{ namespace: string }>;
-    children?: TabConfig[];
-    hooks?: TabLifecycleHooks;
+    component: React.ComponentType<any>;
+    hooks?: {
+      onTabMount?: (namespace: string) => void;
+      onTabUnmount?: (namespace: string) => void;
+    };
     style?: React.CSSProperties;
-  }
-
-  export interface TabLifecycleHooks {
-    onTabMount?: (namespace: string) => void;
-    onTabUnmount?: (namespace: string) => void;
-    onStateUpdate?: (namespace: string, state: any) => void;
   }
 
   export interface TabbedInterfaceProps {
     tabs: TabConfig[];
   }
 
-  export const TabbedInterface: React.FC<TabbedInterfaceProps>;
+  export class TabbedInterface extends React.Component<TabbedInterfaceProps> {}
 
-  export interface SystemStateResult {
-    state: any;
+  export interface SystemStateHook {
+    sendMessage: (message: { type: string; content: string }) => Promise<{ type: string; content: string; namespace: string }>;
     loading: boolean;
     error: string | null;
-    sendMessage: (message: Partial<MessageDto>) => Promise<MessageDto>;
   }
 
-  export function useSystemState(namespace: string): SystemStateResult;
+  export function useSystemState(namespace: string): SystemStateHook;
 }
