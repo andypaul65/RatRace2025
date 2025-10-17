@@ -3,7 +3,7 @@
   "info": {
     "title": "RatRace2025 MVP Subproject API",
     "description": "API contracts for RatRace2025 financial modeling subproject within MVP framework",
-    "version": "1.0.0",
+    "version": "0.0.2-SNAPSHOT",
     "contact": {
       "name": "RatRace2025 Development Team"
     }

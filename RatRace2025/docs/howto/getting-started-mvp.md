@@ -137,9 +137,32 @@ Open your browser and navigate to `http://localhost:5173`. You should see:
 
 1. **Click on the "Financial Modeling" tab**
 2. **Scroll to "Load Scenario" section**
-3. **The application uses component-based scenario building**. Scenarios are defined programmatically using the fluent API with components like `RentalProperty`, `Person`, and `InvestmentPortfolio`.
+3. **The application accepts JSON scenario configurations**. You can paste a scenario JSON into the textarea. Here's an example scenario with a rental property and homeowner:
 
-**Note**: The current UI expects scenarios to be loaded programmatically. For development and testing, scenarios are typically built using the Java API:
+```json
+{
+  "components": [
+    {
+      "type": "rental_property",
+      "id": "primary_residence",
+      "propertyValue": 300000,
+      "appreciationRate": 0.03,
+      "mortgageAmount": 240000,
+      "mortgageRate": 0.045,
+      "monthlyRent": 2500
+    },
+    {
+      "type": "person",
+      "id": "homeowner",
+      "taxCode": "1257L",
+      "personalAllowance": 12570
+    }
+  ],
+  "periods": 12
+}
+```
+
+**Note**: The UI expects scenarios in JSON format. For development and testing, scenarios are typically built using the Java fluent API:
 
 ```java
 Scenario scenario = Scenario.builder()
@@ -160,7 +183,7 @@ Scenario scenario = Scenario.builder()
     .build();
 ```
 
-4. **Click "Load Scenario"** (uses pre-configured scenarios for demonstration)
+4. **Paste the JSON example above** into the textarea and click "Load Scenario"
 5. **Status should show**: "Scenario loaded successfully"
 
 ### Step 3: Run the Simulation

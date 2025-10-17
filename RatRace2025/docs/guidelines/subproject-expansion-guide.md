@@ -17,15 +17,15 @@ Extensions are achieved through:
 ## Packaging and Naming
 
 ### Server JAR Naming
-- **Library JAR**: `org.ajp.mvp:server:0.0.1-SNAPSHOT.jar`
+- **Library JAR**: `org.ajp.mvp:server:0.0.2-SNAPSHOT.jar`
   - Contains core services, controllers, DTOs.
   - Dependency for extending projects.
-- **Executable JAR**: `org.ajp.mvp:server:0.0.1-SNAPSHOT-exec.jar`
+- **Executable JAR**: `org.ajp.mvp:server:0.0.2-SNAPSHOT-exec.jar`
   - Includes embedded server for standalone apps.
   - Not used when building on top of the base layer.
 
 ### Client NPM Naming
-- **Package**: `@nednederlander/mvp-client@0.0.1`
+- **Package**: `@nednederlander/mvp-client@0.0.2`
 - **Dist Files**:
   - `dist/index.js`: ESM bundle (externalizes React/React-DOM).
   - `dist/index.d.ts`: TypeScript definitions.
@@ -45,7 +45,7 @@ To enable publishing the client library to NPM:
    ```json
    {
      "name": "@nednederlander/mvp-client",
-     "version": "0.0.1",
+     "version": "0.0.2-SNAPSHOT",
      "publishConfig": {
        "access": "public"
      },
@@ -286,15 +286,15 @@ my-extension/
 To maintain a reliable ecosystem:
 
 1. **Development Workflow**:
-   - Use `-SNAPSHOT` versions (e.g., `0.0.1-SNAPSHOT` in Maven, `0.0.1-dev` or similar in NPM) for iterative development, commits, and internal deployments. This allows multiple deployments without version changes, supporting ongoing testing and integration.
+   - Use `-SNAPSHOT` versions (e.g., `0.0.2-SNAPSHOT` in Maven, `0.0.2-dev` or similar in NPM) for iterative development, commits, and internal deployments. This allows multiple deployments without version changes, supporting ongoing testing and integration.
    - Commits and builds can proceed with SNAPSHOT versions as they do not require version bumps for each change.
 
 2. **Release Preparation**:
-   - When ready for official release, remove `-SNAPSHOT` and update to a stable version following SemVer (e.g., `0.0.1` for initial release).
+   - When ready for official release, remove `-SNAPSHOT` and update to a stable version following SemVer (e.g., `0.0.2` for initial release).
    - Run full pre-release checks: full test suites, builds, and compatibility verification.
 
 3. **Semantic Versioning**: Update versions in `package.json` (client) and `pom.xml` (server) following SemVer conventions (MAJOR.MINOR.PATCH):
-   - **MAJOR**: Breaking changes (e.g., 1.0.0 → 2.0.0).
+   - **MAJOR**: Breaking changes (e.g., 0.0.2 → 1.0.0).
    - **MINOR**: New features (backward-compatible).
    - **PATCH**: Bug fixes.
 
@@ -304,7 +304,7 @@ To maintain a reliable ecosystem:
 
 5. **Changelog**: Maintain a `CHANGELOG.md` documenting version changes and breaking changes.
 
-6. **Dependency Management**: Extending projects should specify version ranges (e.g., `^1.0.0` for NPM, exact versions for Maven) to allow patches but avoid breaking changes. Pin to stable releases for production stability.
+6. **Dependency Management**: Extending projects should specify version ranges (e.g., `^0.0.2` for NPM, exact versions for Maven) to allow patches but avoid breaking changes. Pin to stable releases for production stability.
 
 ## API Reference
 - Server Endpoints: See `api-contracts.json`

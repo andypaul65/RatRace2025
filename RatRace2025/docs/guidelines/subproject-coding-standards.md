@@ -249,7 +249,9 @@ Always ensure proper `.gitignore` configuration to prevent committing system fil
 - **Build Artifacts**: `dist/`, `node_modules/`, `*.log` files are ignored
 - **Environment and Secret Files**: `.env*`, `.npmrc`, `config/secrets.json`, `config/*.key` files are ignored for security to prevent exposing tokens or credentials
 
-**Before initial commit**: Verify `.gitignore` exists and contains appropriate exclusions.
+**Before initial commit**: Verify `.gitignore` exists and matches this recommended configuration exactly.
+
+**Version Alignment**: Ensure client and server artifact versions match (e.g., if server is 0.0.2-SNAPSHOT, client should be ^0.0.2) to maintain compatibility.
 
 ## Mandatory Pre-Commit Checklist
 

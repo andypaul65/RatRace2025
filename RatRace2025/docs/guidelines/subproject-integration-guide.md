@@ -19,12 +19,23 @@ Subprojects can extend the framework by registering custom services, tabs, and h
 
 ## Step 1: Set Up Server-Side Integration
 
-### Add GitHub Packages Repository
-In your subproject's `pom.xml`, add the repository to access the MVP server JAR:
+### Inherit MVP Backplane Parent POM
+Subprojects inherit the MVP backplane as a parent POM, which provides Spring Boot dependencies (including actuator), configurations, and plugins.
+
+In your subproject's `pom.xml`:
 
 ```xml
-<reproject ...>
-    <!-- Other configurations -->
+<project ...>
+    <!-- Inherit from MVP Backplane Parent POM -->
+    <parent>
+        <groupId>org.ajp.mvp</groupId>
+        <artifactId>server</artifactId>
+        <version>0.0.2-SNAPSHOT</version> <!-- Use latest snapshot release -->
+    </parent>
+
+    <groupId>com.example</groupId> <!-- Your subproject groupId -->
+    <artifactId>my-subproject</artifactId> <!-- Your subproject artifactId -->
+    <version>0.0.2-SNAPSHOT</version>
 
     <repositories>
         <repository>
@@ -33,15 +44,13 @@ In your subproject's `pom.xml`, add the repository to access the MVP server JAR:
         </repository>
     </repositories>
 
-    <!-- Dependencies -->
+    <!-- Dependencies inherited from parent: actuator, web, websocket, security, etc. -->
+    <!-- Add your custom dependencies here -->
     <dependencies>
-        <dependency>
-            <groupId>org.ajp.mvp</groupId>
-            <artifactId>server</artifactId>
-            <version>0.0.1</version> <!-- Use latest stable release -->
-        </dependency>
-        <!-- Add your custom dependencies -->
+        <!-- Custom dependencies -->
     </dependencies>
+
+    <!-- Configuration inherited: actuator enabled, etc. -->
 </project>
 ```
 
@@ -89,24 +98,19 @@ Register services via `ServiceRegistry` in your configuration. The `ServiceRegis
 import org.ajp.mvp.server.ServiceRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import javax.annotation.PostConstruct;
 
 @Component
 public class MyServiceRegistrar {
-
     @Autowired
     private ServiceRegistry registry;
 
-    @Autowired
-    private MyCustomService myCustomService; // Assuming MyCustomService is a @Service
-
-    @PostConstruct
-    public void registerServices() {
-        // Register custom services after bean initialization
-        registry.registerService("myService", myCustomService);
-    }
+    // Register custom services
+    registry.registerService("myService", myServiceInstance);
 }
 ```
+
+### Spring Boot Actuator
+Actuator is included in the backplane and enabled by default. Endpoints are available at `http://localhost:8080/actuator/*` (e.g., `/actuator/health`, `/actuator/info`). You can override settings in your `application.properties` if needed.
 
 ## Step 2: Set Up Client-Side Integration
 
@@ -114,8 +118,10 @@ public class MyServiceRegistrar {
 In your subproject's client directory, install the MVP client package:
 
 ```bash
-npm install @nednederlander/mvp-client react react-dom
+npm install @nednederlander/mvp-client@^0.0.2 react react-dom
 ```
+
+**Important**: Ensure React and React-DOM versions match those expected by the MVP client (currently React 19+). Version mismatches can cause runtime errors like "Cannot read properties of undefined (reading 'recentlyCreatedOwnerStacks')". Use compatible versions or update accordingly.
 
 ### Configure Build and Scripts
 Update `package.json` for the library build:
@@ -123,13 +129,13 @@ Update `package.json` for the library build:
 ```json
 {
   "name": "my-subproject-client",
-  "version": "1.0.0",
+  "version": "0.0.2-SNAPSHOT",
   "scripts": {
     "build": "tsc -b && vite build",
     "dev": "vite"
   },
   "dependencies": {
-    "@nednederlander/mvp-client": "^0.0.1",
+    "@nednederlander/mvp-client": "^0.0.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
@@ -160,7 +166,11 @@ const myTab: TabConfig = {
 const tabs = [/* other tabs */, myTab];
 
 function App() {
-  return <TabbedInterface tabs={tabs} />;
+  return (
+    <React.ErrorBoundary fallback={<div>Error loading tabs</div>}>
+      <TabbedInterface tabs={tabs} />
+    </React.ErrorBoundary>
+  );
 }
 
 export default App;
@@ -183,7 +193,7 @@ The framework uses OpenAPI contracts in `api-contracts.json`. Ensure your subpro
 - **Client**: `npm run build` then run `npm run dev` in a separate terminal (do not run in chat).
 
 ### Versioning
-Pin to stable versions for production (e.g., `0.0.1`). Use version ranges for development (e.g., `^0.0.1`).
+Pin to stable versions for production (e.g., `0.0.2`). Use version ranges for development (e.g., `^0.0.2`).
 
 ## Troubleshooting
 
@@ -193,6 +203,7 @@ Pin to stable versions for production (e.g., `0.0.1`). Use version ranges for de
 - **Namespace Conflicts**: Use unique namespaces for extensions.
 - **NPM Package Installation**: If `npm install @nednederlander/mvp-client` fails, ensure your registry is set to `https://registry.npmjs.org/` (run `npm config set registry https://registry.npmjs.org/` if needed), clear cache with `npm cache clean --force`, and verify the package exists at https://www.npmjs.com/package/@nednederlander/mvp-client. For public scoped packages, no authentication is required.
 - **Spring Boot Startup**: If Spring Boot fails to start, check for Maven dependency resolution (`mvn dependency:resolve`), ensure the MVP server JAR is correctly pulled from GitHub Packages (verify PAT and repository configuration), and inspect logs for bean creation errors or classpath issues. Confirm that custom services extending `AbstractSystemStateService` are properly annotated with `@Service`.
+- **React Runtime Errors**: If you encounter errors like "Cannot read properties of undefined (reading 'recentlyCreatedOwnerStacks')" from the MVP client, this indicates a React version mismatch. Ensure your subproject uses React 19+ (matching the MVP client's build). Wrap the `TabbedInterface` in a React Error Boundary to handle such issues gracefully. Check `package.json` for compatible React versions and run `npm update` if needed.
 
 ## Next Steps
 
