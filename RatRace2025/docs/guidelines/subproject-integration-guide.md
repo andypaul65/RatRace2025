@@ -30,12 +30,12 @@ In your subproject's `pom.xml`:
     <parent>
         <groupId>org.ajp.mvp</groupId>
         <artifactId>server</artifactId>
-        <version>0.0.2-SNAPSHOT</version> <!-- Use latest snapshot release -->
+        <version>0.0.3-SNAPSHOT</version> <!-- Use latest snapshot release -->
     </parent>
 
     <groupId>com.example</groupId> <!-- Your subproject groupId -->
     <artifactId>my-subproject</artifactId> <!-- Your subproject artifactId -->
-    <version>0.0.2-SNAPSHOT</version>
+    <version>1.0.0</version>
 
     <repositories>
         <repository>
@@ -73,7 +73,8 @@ Create a Personal Access Token (PAT) in GitHub with `read:packages` scope. Add t
 Create a custom service by extending `AbstractSystemStateService`:
 
 ```java
-import org.ajp.mvp.server.AbstractSystemStateService;
+import com.example.services.AbstractSystemStateService;
+import com.example.dto.MessageDto;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -95,7 +96,7 @@ public class MyCustomService extends AbstractSystemStateService {
 Register services via `ServiceRegistry` in your configuration. The `ServiceRegistry` is available as a Spring bean for injection:
 
 ```java
-import org.ajp.mvp.server.ServiceRegistry;
+import com.example.services.ServiceRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -129,7 +130,7 @@ Update `package.json` for the library build:
 ```json
 {
   "name": "my-subproject-client",
-  "version": "0.0.2-SNAPSHOT",
+  "version": "1.0.0",
   "scripts": {
     "build": "tsc -b && vite build",
     "dev": "vite"
@@ -193,7 +194,7 @@ The framework uses OpenAPI contracts in `api-contracts.json`. Ensure your subpro
 - **Client**: `npm run build` then run `npm run dev` in a separate terminal (do not run in chat).
 
 ### Versioning
-Pin to stable versions for production (e.g., `0.0.2`). Use version ranges for development (e.g., `^0.0.2`).
+Pin to stable versions for production (e.g., `0.0.3`). Use version ranges for development (e.g., `^0.0.3`).
 
 ## Troubleshooting
 
@@ -202,7 +203,7 @@ Pin to stable versions for production (e.g., `0.0.2`). Use version ranges for de
 - **Build Errors**: Check TypeScript and Java versions match requirements.
 - **Namespace Conflicts**: Use unique namespaces for extensions.
 - **NPM Package Installation**: If `npm install @nednederlander/mvp-client` fails, ensure your registry is set to `https://registry.npmjs.org/` (run `npm config set registry https://registry.npmjs.org/` if needed), clear cache with `npm cache clean --force`, and verify the package exists at https://www.npmjs.com/package/@nednederlander/mvp-client. For public scoped packages, no authentication is required.
-- **Spring Boot Startup**: If Spring Boot fails to start, check for Maven dependency resolution (`mvn dependency:resolve`), ensure the MVP server JAR is correctly pulled from GitHub Packages (verify PAT and repository configuration), and inspect logs for bean creation errors or classpath issues. Confirm that custom services extending `AbstractSystemStateService` are properly annotated with `@Service`.
+- **Spring Boot Startup**: If Spring Boot fails to start, check for Maven dependency resolution (`mvn dependency:resolve`), ensure the MVP mvp-core JAR and server POM are correctly pulled from GitHub Packages (verify PAT and repository configuration), and inspect logs for bean creation errors or classpath issues. Confirm that custom services extending `AbstractSystemStateService` are properly annotated with `@Service`.
 - **React Runtime Errors**: If you encounter errors like "Cannot read properties of undefined (reading 'recentlyCreatedOwnerStacks')" from the MVP client, this indicates a React version mismatch. Ensure your subproject uses React 19+ (matching the MVP client's build). Wrap the `TabbedInterface` in a React Error Boundary to handle such issues gracefully. Check `package.json` for compatible React versions and run `npm update` if needed.
 
 ## Next Steps
