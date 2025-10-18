@@ -4,7 +4,7 @@ import com.finmodel.mvp.RatRaceSystemStateService;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.When;
 import io.cucumber.java.en.Then;
-import org.ajp.mvp.server.MessageDto;
+import com.example.dto.MessageDto;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class MvpIntegrationSteps {

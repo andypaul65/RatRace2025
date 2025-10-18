@@ -5,7 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.ajp.mvp.server.MessageDto;
+import com.example.dto.MessageDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
 import com.finmodel.mvp.RatRaceSystemStateService;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -49,16 +51,16 @@ class RatRaceSystemStateServiceTest {
             }
             """;
 
-        MessageDto request = MessageDto.builder()
-                .type("load_scenario")
-                .content(scenarioJson)
-                .namespace(namespace)
-                .build();
+        String requestContent = "{\"type\":\"load_scenario\",\"content\":" + scenarioJson + ",\"namespace\":\"" + namespace + "\"}";
+        MessageDto request = new MessageDto(requestContent, namespace);
 
         MessageDto response = service.processMessage(namespace, request);
 
-        assertEquals("load_response", response.getType());
-        assertEquals("Scenario loaded successfully", response.getContent());
+        // Parse response content to check type
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Object> responseMap = mapper.readValue(response.getContent(), Map.class);
+        assertEquals("load_response", responseMap.get("type"));
+        assertEquals("Scenario loaded successfully", responseMap.get("content"));
         assertEquals(namespace, response.getNamespace());
     }
 
@@ -67,16 +69,16 @@ class RatRaceSystemStateServiceTest {
         String namespace = "test-namespace";
         String invalidJson = "invalid json content";
 
-        MessageDto request = MessageDto.builder()
-                .type("load_scenario")
-                .content(invalidJson)
-                .namespace(namespace)
-                .build();
+        String requestContent = "{\"type\":\"load_scenario\",\"content\":\"" + invalidJson + "\",\"namespace\":\"" + namespace + "\"}";
+        MessageDto request = new MessageDto(requestContent, namespace);
 
         MessageDto response = service.processMessage(namespace, request);
 
-        assertEquals("error", response.getType());
-        assertTrue(response.getContent().contains("Failed to load scenario"));
+        // Parse response content to check type
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Object> responseMap = mapper.readValue(response.getContent(), Map.class);
+        assertEquals("error", responseMap.get("type"));
+        assertTrue(((String) responseMap.get("content")).contains("Failed to load scenario"));
         assertEquals(namespace, response.getNamespace());
     }
 

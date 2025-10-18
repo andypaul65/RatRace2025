@@ -4,7 +4,9 @@
   "scripts": {
     "build": "tsc -b && vite build",
     "dev": "vite",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui"
   },
   "dependencies": {
     "@nednederlander/mvp-client": "^0.0.2",
@@ -17,6 +19,12 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.1",
     "typescript": "~5.8.3",
-    "vite": "^5.4.20"
+    "vite": "^5.4.20",
+    "vitest": "^1.3.1",
+    "@testing-library/react": "^14.1.2",
+    "@testing-library/jest-dom": "^6.1.5",
+    "@testing-library/user-event": "^14.5.1",
+    "jsdom": "^23.0.1",
+    "msw": "^2.0.11"
   }
 }
